@@ -6,6 +6,7 @@ import json
 import torchvision.transforms.functional as TF
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
+import torch
 
 from PIL import Image
 
@@ -15,7 +16,18 @@ IMG_SIZE = (32, 32)
 # build Pytorch generator dataset
 class MemeDataset(Dataset):
 
-    def __init__(self):
+    def __init__(self, transform=None):
+        
+        if transform is None:
+            # default transform
+            transform = transforms.Compose([
+                transforms.ConvertImageDtype(torch.uint8),
+                transforms.AutoAugment(),
+                transforms.Resize(IMG_SIZE),
+                transforms.ConvertImageDtype(torch.float),
+            ])
+            
+        self.transform = transform
         
         # cache dir for the template
         self.cache_dir = f"{DATASET_PATH}/template_image_cache"
@@ -55,8 +67,9 @@ class MemeDataset(Dataset):
         
         with Image.open(f"{self.cache_dir}/{template_name}.jpg") as template_image:
             img = TF.to_tensor(template_image)
-            
-        img = TF.resize(img, IMG_SIZE)
+                    
+        if self.transform:
+            img = self.transform(img)
             
         return img#, caption 
     
@@ -75,17 +88,14 @@ def get_dataloader():
 
     # randomly crop and rotate the image
     transform = transforms.Compose([
-        transforms.RandomRotation(10),
-        transforms.RandomCrop(32),
-        transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+        transforms.ConvertImageDtype(torch.uint8),
+        transforms.AutoAugment(),
+        transforms.Resize(IMG_SIZE),
+        transforms.ConvertImageDtype(torch.float),
     ])
 
     # apply the transform to the dataset
-    dataset = Dataset(
-        MemeDataset(),
-        transform=transform
-    )
+    dataset = MemeDataset(transform=transform)
 
     dataloader = DataLoader(
         dataset,
@@ -96,6 +106,10 @@ def get_dataloader():
     )
 
     return dataloader
+
+def view_img(img):
+    img = transforms.ToPILImage()(img).convert("RGB")
+    img.show()    
     
 
 if __name__ == "__main__":
@@ -104,7 +118,17 @@ if __name__ == "__main__":
     # test_dataset_getitem(0)
     # test_dataset_getitem(10000)
     
-    dataloader = DataLoader(dataset, batch_size=64, shuffle=True)
-    imgs, captions = next(iter(dataloader))
+    dataloader = DataLoader(
+        dataset,
+        batch_size=16,
+        shuffle=True,
+        num_workers=0,
+        drop_last=True,
+    )
+
+    imgs = next(iter(dataloader))
+
+    stacked_img = torch.cat([img for img in imgs], axis=1)
+    view_img(stacked_img)
     
     
