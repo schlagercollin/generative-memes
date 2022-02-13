@@ -10,7 +10,7 @@ from torchvision import transforms
 from PIL import Image
 
 DATASET_PATH = 'scraper/dataset/'
-IMG_SIZE = (128, 128)
+IMG_SIZE = (32, 32)
 
 # build Pytorch generator dataset
 class MemeDataset(Dataset):
@@ -58,9 +58,10 @@ class MemeDataset(Dataset):
             
         img = TF.resize(img, IMG_SIZE)
             
-        return img, caption 
+        return img#, caption 
     
     def __len__(self):
+        return 20000
         return len(self.memes)
 
 def test_dataset_getitem(idx):
@@ -69,6 +70,32 @@ def test_dataset_getitem(idx):
     print(t1.shape)
     print(c1)
     img.show()
+
+def get_dataloader():
+
+    # randomly crop and rotate the image
+    transform = transforms.Compose([
+        transforms.RandomRotation(10),
+        transforms.RandomCrop(32),
+        transforms.ToTensor(),
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+    ])
+
+    # apply the transform to the dataset
+    dataset = Dataset(
+        MemeDataset(),
+        transform=transform
+    )
+
+    dataloader = DataLoader(
+        dataset,
+        batch_size=16,
+        shuffle=True,
+        num_workers=0,
+        drop_last=True,
+    )
+
+    return dataloader
     
 
 if __name__ == "__main__":
@@ -79,4 +106,5 @@ if __name__ == "__main__":
     
     dataloader = DataLoader(dataset, batch_size=64, shuffle=True)
     imgs, captions = next(iter(dataloader))
+    
     
