@@ -74,7 +74,7 @@ class MemeDataset(Dataset):
         return img#, caption 
     
     def __len__(self):
-        return 20000
+        return 5
         return len(self.memes)
 
 def test_dataset_getitem(idx):
