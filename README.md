@@ -1,1 +1,1 @@
-# de-generative-meme-modelling
+# generative-memes
