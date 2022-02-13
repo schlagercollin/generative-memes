@@ -1,13 +1,13 @@
-import torch # :)
 import numpy as np
 import os
 import glob
 import json
-from torch.utils.data import Dataset
+
+import torchvision.transforms.functional as TF
+from torch.utils.data import Dataset, DataLoader
+from torchvision import transforms
 
 from PIL import Image
-import torchvision.transforms.functional as TF
-from torchvision import transforms
 
 DATASET_PATH = 'scraper/dataset/'
 IMG_SIZE = (128, 128)
@@ -59,6 +59,9 @@ class MemeDataset(Dataset):
         img = TF.resize(img, IMG_SIZE)
             
         return img, caption 
+    
+    def __len__(self):
+        return len(self.memes)
 
 def test_dataset_getitem(idx):
     t1, c1 = dataset.__getitem__(idx)
@@ -71,5 +74,9 @@ def test_dataset_getitem(idx):
 if __name__ == "__main__":
     
     dataset = MemeDataset()
-    test_dataset_getitem(0)
-    test_dataset_getitem(10000)
+    # test_dataset_getitem(0)
+    # test_dataset_getitem(10000)
+    
+    dataloader = DataLoader(dataset, batch_size=64, shuffle=True)
+    imgs, captions = next(iter(dataloader))
+    
