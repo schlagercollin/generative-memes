@@ -40,8 +40,16 @@ class MemeDataset(Dataset):
 
         # save the different text outputs
         self.memes = []
+        
+        # load the templates to memory
+        self.images = {}
 
         for template in self.templates:
+            
+            with Image.open(f"{self.cache_dir}/{template}.jpg") as template_image:
+                img = TF.to_tensor(template_image)
+                self.images[template] = img
+            
             text_snippets = []
             for meme in json.load(open(f"{DATASET_PATH}/memes/{template}")):
                 self.memes.append((template, " ".join(meme['boxes'])))  # (template, caption)
@@ -65,8 +73,7 @@ class MemeDataset(Dataset):
         
         template_name, caption = self.memes[index]
         
-        with Image.open(f"{self.cache_dir}/{template_name}.jpg") as template_image:
-            img = TF.to_tensor(template_image)
+        img = self.images[template_name]
                     
         if self.transform:
             img = self.transform(img)
