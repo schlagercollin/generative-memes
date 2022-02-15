@@ -6,6 +6,7 @@ import json
 import torchvision.transforms.functional as TF
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
+from torchtext import vocab as Vocab
 import torch
 
 from PIL import Image
@@ -14,7 +15,7 @@ DATASET_PATH = 'scraper/dataset/'
 IMG_SIZE = (32, 32)
 
 # build Pytorch generator dataset
-class MemeDataset(Dataset):
+class MemeCaptionDataset(Dataset):
 
     def __init__(self, transform=None):
         
@@ -54,6 +55,15 @@ class MemeDataset(Dataset):
             for meme in json.load(open(f"{DATASET_PATH}/memes/{template}")):
                 self.memes.append((template, " ".join(meme['boxes'])))  # (template, caption)
 
+        def yield_strings():
+            for template, caption in self.memes:
+                yield caption.strip().split()
+
+        self.vocab = Vocab.build_vocab_from_iterator(
+            yield_strings(),
+            min_freq=10
+        )
+
     def download_meme_templates(self):
 
         # ensure that the cache directory has been created
@@ -78,24 +88,13 @@ class MemeDataset(Dataset):
         if self.transform:
             img = self.transform(img)
             
-        return img
+        return img, caption 
     
     def __len__(self):
         return 20000
         return len(self.memes)
-    
 
-class MemeCaptionDataset(MemeDataset):
-    def __getitem__(self, index):
-        
-        template_name, caption = self.memes[index]
-        
-        img = self.images[template_name]
-                    
-        if self.transform:
-            img = self.transform(img)
-            
-        return img, caption 
+    
 
 def test_dataset_getitem(idx):
     t1, c1 = dataset.__getitem__(idx)
@@ -134,21 +133,24 @@ def view_img(img):
 
 if __name__ == "__main__":
     
-    dataset = MemeDataset()
-    # test_dataset_getitem(0)
-    # test_dataset_getitem(10000)
+    # dataset = MemeDataset()
+    # # test_dataset_getitem(0)
+    # # test_dataset_getitem(10000)
     
-    dataloader = DataLoader(
-        dataset,
-        batch_size=16,
-        shuffle=True,
-        num_workers=0,
-        drop_last=True,
-    )
+    # dataloader = DataLoader(
+    #     dataset,
+    #     batch_size=16,
+    #     shuffle=True,
+    #     num_workers=0,
+    #     drop_last=True,
+    # )
 
-    imgs = next(iter(dataloader))
+    # imgs = next(iter(dataloader))
 
-    stacked_img = torch.cat([img for img in imgs], axis=1)
-    view_img(stacked_img)
+    # stacked_img = torch.cat([img for img in imgs], axis=1)
+    # view_img(stacked_img)
+
+    caption_dataset = MemeCaptionDataset()
+    print(len(caption_dataset.vocab.get_itos()))
     
     
