@@ -17,7 +17,7 @@ IMG_SIZE = (32, 32)
 # build Pytorch generator dataset
 class MemeCaptionDataset(Dataset):
 
-    def __init__(self, transform=None):
+    def __init__(self, max_seq_length=15, transform=None):
         
         if transform is None:
             # default transform
@@ -64,6 +64,17 @@ class MemeCaptionDataset(Dataset):
             min_freq=10
         )
 
+        self.itos = self.vocab.get_itos()
+        self.stoi = self.vocab.get_stoi()
+
+        self.unk = "<UNK>"
+        self.itos.append(self.unk)
+        self.stoi[self.unk] = len(self.stoi)
+
+        self.max_seq_length = max_seq_length
+
+        
+
     def download_meme_templates(self):
 
         # ensure that the cache directory has been created
@@ -87,8 +98,16 @@ class MemeCaptionDataset(Dataset):
                     
         if self.transform:
             img = self.transform(img)
-            
-        return img, caption 
+
+        caption_vector = np.zeros((self.max_seq_length))
+        caption = caption.strip().split()
+
+        for i, word in enumerate(caption):
+            if i >= self.max_seq_length:
+                break
+            caption_vector[i] = self.stoi[word] if word in self.stoi else self.stoi[self.unk]
+
+        return img, caption_vector.astype(np.long)
     
     def __len__(self):
         return 20000
@@ -151,6 +170,7 @@ if __name__ == "__main__":
     # view_img(stacked_img)
 
     caption_dataset = MemeCaptionDataset()
-    print(len(caption_dataset.vocab.get_itos()))
+    print(caption_dataset.itos[-5:])
+    print(caption_dataset.stoi[caption_dataset.unk])
     
     
