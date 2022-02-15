@@ -80,19 +80,19 @@ def train():
         vocab_size=vocab_size
     )
 
-    data_loader = torch.utils.data.DataLoader(
+    data_loader = iter(torch.utils.data.DataLoader(
         dataset,
         batch_size=caption_batch_size,
         shuffle=True, 
         num_workers=workers
-    )
+    ))
 
-    val_data_loader = torch.utils.data.DataLoader(
+    val_data_loader = iter(torch.utils.data.DataLoader(
         dataset,
         batch_size=caption_batch_size,
         shuffle=True, 
         num_workers=workers
-    )
+    ))
 
     optimizer = torch.optim.Adam(decoder.parameters())
 
@@ -116,7 +116,7 @@ def train():
             decoder.train()
             
             # Obtain the batch.
-            images, captions = next(iter(data_loader))
+            images, captions = next(data_loader)
             
             # make the captions for targets and teacher forcer
             captions_target = captions[:, 1:].to(device)
@@ -147,7 +147,7 @@ def train():
                 decoder.eval()
 
                 # get the validation images and captions
-                val_images, val_captions = next(iter(val_data_loader))
+                val_images, val_captions = next(val_data_loader)
 
                 # define the captions
                 captions_target = val_captions[:, 1:].to(device)
