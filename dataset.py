@@ -20,7 +20,7 @@ IMG_SIZE = (settings.img_size, settings.img_size)
 # build Pytorch generator dataset
 class MemeCaptionDataset(Dataset):
 
-    def __init__(self, transform=None):
+    def __init__(self, max_seq_length=15, transform=None):
         
         if transform is None:
             # default transform
@@ -67,6 +67,17 @@ class MemeCaptionDataset(Dataset):
             min_freq=10
         )
 
+        self.itos = self.vocab.get_itos()
+        self.stoi = self.vocab.get_stoi()
+
+        self.unk = "<UNK>"
+        self.itos.append(self.unk)
+        self.stoi[self.unk] = len(self.stoi)
+
+        self.max_seq_length = max_seq_length
+
+        
+
     def download_meme_templates(self):
 
         # ensure that the cache directory has been created
@@ -90,11 +101,18 @@ class MemeCaptionDataset(Dataset):
                     
         if self.transform:
             img = self.transform(img)
-            
-        return img, caption 
+
+        caption_vector = np.zeros((self.max_seq_length))
+        caption = caption.strip().split()
+
+        for i, word in enumerate(caption):
+            if i >= self.max_seq_length:
+                break
+            caption_vector[i] = self.stoi[word] if word in self.stoi else self.stoi[self.unk]
+
+        return img, caption_vector.astype(np.long)
     
     def __len__(self):
-        return 20000
         return len(self.memes)
     
 
@@ -164,63 +182,14 @@ class MemeTemplateDataset(Dataset):
     def __len__(self):
         return len(self.images) * self.epoch_multiplier
 
-    
-
-def test_dataset_getitem(idx):
-    t1, c1 = dataset.__getitem__(idx)
-    img = transforms.ToPILImage()(t1).convert("RGB")
-    print(t1.shape)
-    print(c1)
-    img.show()
-
-def get_dataloader():
-
-    # randomly crop and rotate the image
-    transform = transforms.Compose([
-        transforms.ConvertImageDtype(torch.uint8),
-        transforms.AutoAugment(),
-        transforms.Resize(IMG_SIZE),
-        transforms.ConvertImageDtype(torch.float),
-    ])
-
-    # apply the transform to the dataset
-    dataset = MemeDataset(transform=transform)
-
-    dataloader = DataLoader(
-        dataset,
-        batch_size=16,
-        shuffle=True,
-        num_workers=0,
-        drop_last=True,
-    )
-
-    return dataloader
-
 def view_img(img):
     img = transforms.ToPILImage()(img).convert("RGB")
     img.show()    
-    
 
 if __name__ == "__main__":
-    
-    # dataset = MemeDataset()
-    # # test_dataset_getitem(0)
-    # # test_dataset_getitem(10000)
-    
-    # dataloader = DataLoader(
-    #     dataset,
-    #     batch_size=16,
-    #     shuffle=True,
-    #     num_workers=0,
-    #     drop_last=True,
-    # )
-
-    # imgs = next(iter(dataloader))
-
-    # stacked_img = torch.cat([img for img in imgs], axis=1)
-    # view_img(stacked_img)
 
     caption_dataset = MemeCaptionDataset()
-    print(len(caption_dataset.vocab.get_itos()))
+    print(caption_dataset.itos[-5:])
+    print(caption_dataset.stoi[caption_dataset.unk])
     
     
