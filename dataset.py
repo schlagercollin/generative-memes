@@ -4,6 +4,7 @@ import glob
 import json
 
 import torchvision.transforms.functional as TF
+from torchvision.transforms.autoaugment import AutoAugmentPolicy 
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from torchtext import vocab as Vocab
@@ -11,8 +12,10 @@ import torch
 
 from PIL import Image
 
+import settings
+
 DATASET_PATH = 'scraper/dataset/'
-IMG_SIZE = (32, 32)
+IMG_SIZE = (settings.img_size, settings.img_size)
 
 # build Pytorch generator dataset
 class MemeCaptionDataset(Dataset):
@@ -112,6 +115,73 @@ class MemeCaptionDataset(Dataset):
     def __len__(self):
         return 20000
         return len(self.memes)
+    
+
+class MemeTemplateDataset(Dataset):
+
+    def __init__(self, transform=None, epoch_multiplier=100):
+        
+        if transform is None:
+            # default transform
+            transform = transforms.Compose([
+                transforms.ConvertImageDtype(torch.uint8),
+                transforms.AutoAugment(policy=AutoAugmentPolicy.IMAGENET),
+                transforms.Resize(IMG_SIZE),
+                transforms.ConvertImageDtype(torch.float),
+            ])
+            
+        self.transform = transform
+        
+        # artificially increase the size of an epoch
+        self.epoch_multiplier = epoch_multiplier
+        
+        # cache dir for the template
+        self.cache_dir = f"{DATASET_PATH}/template_image_cache"
+
+        # load templates
+        self.templates = [os.path.basename(template) for template in glob.glob(f"{DATASET_PATH}/memes/*.json")]
+
+        # download the meme templates
+        self.download_meme_templates()
+        
+        # load the templates to memory
+        self.images = []
+
+        for template in self.templates:
+            with Image.open(f"{self.cache_dir}/{template}.jpg") as template_image:
+                img = TF.to_tensor(template_image)
+                self.images.append(img)
+                
+
+    def download_meme_templates(self):
+
+        # ensure that the cache directory has been created
+        if not os.path.exists(self.cache_dir):
+            os.makedirs(self.cache_dir)
+
+        # ensure that each template is cached within the cache directory
+        for template in self.templates:
+            if not os.path.exists(f"{self.cache_dir}/{template}.jpg"):
+                # extract relevant URL
+                url = json.load(open(f"{DATASET_PATH}/templates/{template}"))['template_url']
+
+                # download the specific meme
+                os.system(f"wget -O {self.cache_dir}/{template}.jpg {url}")
+
+    def __getitem__(self, index):
+        
+        # map dataset index to actual image index
+        index = index % len(self.images)
+        
+        img = self.images[index]
+                    
+        if self.transform:
+            img = self.transform(img)
+            
+        return img
+    
+    def __len__(self):
+        return len(self.images) * self.epoch_multiplier
 
     
 

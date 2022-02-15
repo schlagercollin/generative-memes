@@ -1,6 +1,6 @@
 import torch
 from settings import batch_size, workers
-from dataset import MemeDataset
+from dataset import MemeTemplateDataset
 from matplotlib import pyplot as plt
 import numpy as np
 import torchgan
@@ -20,7 +20,7 @@ os.environ["TENSORBOARD_LOGGING"] = "1"
 
 if __name__ == "__main__":
 
-    dataset = MemeDataset()
+    dataset = MemeTemplateDataset(epoch_multiplier=1)
 
     dataloader = torch.utils.data.DataLoader(
         dataset,
@@ -34,8 +34,9 @@ if __name__ == "__main__":
             "name": DCGANGenerator,
             "args": {
                 "encoding_dims": 100,
+                "out_size": 64,
                 "out_channels": 3,
-                "step_channels": 32,
+                "step_channels": 64,
                 "nonlinearity": nn.LeakyReLU(0.2),
                 "last_nonlinearity": nn.Tanh(),
             },
@@ -44,8 +45,9 @@ if __name__ == "__main__":
         "discriminator": {
             "name": DCGANDiscriminator,
             "args": {
+                "in_size": 64,
                 "in_channels": 3,
-                "step_channels": 32,
+                "step_channels": 64,
                 "nonlinearity": nn.LeakyReLU(0.2),
                 "last_nonlinearity": nn.LeakyReLU(0.2),
             },
@@ -68,7 +70,7 @@ if __name__ == "__main__":
     # plt.title("Training Images")
     # plt.imshow(
     #     np.transpose(
-    #         vutils.make_grid(real_batch[0][:64], padding=2, normalize=True).cpu(), (1, 2, 0)
+    #         vutils.make_grid(real_batch, padding=2, normalize=True).cpu(), (1, 2, 0)
     #     )
     # )
     # plt.show()
@@ -77,7 +79,7 @@ if __name__ == "__main__":
         device = torch.device("cuda:0")
         # Use deterministic cudnn algorithms
         torch.backends.cudnn.deterministic = True
-        epochs = 10
+        epochs = 3000
     else:
         device = torch.device("cpu")
         epochs = 100
