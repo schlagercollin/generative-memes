@@ -78,11 +78,24 @@ class MemeDataset(Dataset):
         if self.transform:
             img = self.transform(img)
             
-        return img#, caption 
+        return img
     
     def __len__(self):
-        return 5
+        return 20000
         return len(self.memes)
+    
+
+class MemeCaptionDataset(MemeDataset):
+    def __getitem__(self, index):
+        
+        template_name, caption = self.memes[index]
+        
+        img = self.images[template_name]
+                    
+        if self.transform:
+            img = self.transform(img)
+            
+        return img, caption 
 
 def test_dataset_getitem(idx):
     t1, c1 = dataset.__getitem__(idx)
