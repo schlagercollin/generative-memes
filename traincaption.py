@@ -103,7 +103,7 @@ def train():
     losses = list()
     val_losses = list()
 
-    for epoch in range(1, 10+1):
+    for epoch in range(1, caption_num_epochs + 1):
         
         for i_step in range(1, total_step+1):
             

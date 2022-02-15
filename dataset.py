@@ -113,7 +113,6 @@ class MemeCaptionDataset(Dataset):
         return img, caption_vector.astype(np.long)
     
     def __len__(self):
-        return 20000
         return len(self.memes)
     
 
@@ -183,61 +182,11 @@ class MemeTemplateDataset(Dataset):
     def __len__(self):
         return len(self.images) * self.epoch_multiplier
 
-    
-
-def test_dataset_getitem(idx):
-    t1, c1 = dataset.__getitem__(idx)
-    img = transforms.ToPILImage()(t1).convert("RGB")
-    print(t1.shape)
-    print(c1)
-    img.show()
-
-def get_dataloader():
-
-    # randomly crop and rotate the image
-    transform = transforms.Compose([
-        transforms.ConvertImageDtype(torch.uint8),
-        transforms.AutoAugment(),
-        transforms.Resize(IMG_SIZE),
-        transforms.ConvertImageDtype(torch.float),
-    ])
-
-    # apply the transform to the dataset
-    dataset = MemeDataset(transform=transform)
-
-    dataloader = DataLoader(
-        dataset,
-        batch_size=16,
-        shuffle=True,
-        num_workers=0,
-        drop_last=True,
-    )
-
-    return dataloader
-
 def view_img(img):
     img = transforms.ToPILImage()(img).convert("RGB")
     img.show()    
-    
 
 if __name__ == "__main__":
-    
-    # dataset = MemeDataset()
-    # # test_dataset_getitem(0)
-    # # test_dataset_getitem(10000)
-    
-    # dataloader = DataLoader(
-    #     dataset,
-    #     batch_size=16,
-    #     shuffle=True,
-    #     num_workers=0,
-    #     drop_last=True,
-    # )
-
-    # imgs = next(iter(dataloader))
-
-    # stacked_img = torch.cat([img for img in imgs], axis=1)
-    # view_img(stacked_img)
 
     caption_dataset = MemeCaptionDataset()
     print(caption_dataset.itos[-5:])
