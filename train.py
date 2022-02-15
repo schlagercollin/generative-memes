@@ -79,7 +79,7 @@ if __name__ == "__main__":
         device = torch.device("cuda:0")
         # Use deterministic cudnn algorithms
         torch.backends.cudnn.deterministic = True
-        epochs = 10
+        epochs = 3000
     else:
         device = torch.device("cpu")
         epochs = 100
