@@ -73,12 +73,12 @@ def train():
     dataset = MemeCaptionDataset()
     vocab_size = len(dataset.itos)
 
-    encoder = EncoderCNN()
+    encoder = EncoderCNN().to(device)
     decoder = DecoderRNN(
         embed_size=1024, 
         hidden_size=1024, 
         vocab_size=vocab_size
-    )
+    ).to(device)
 
     data_loader = iter(torch.utils.data.DataLoader(
         dataset,
@@ -94,7 +94,8 @@ def train():
         num_workers=workers
     ))
 
-    optimizer = torch.optim.Adam(decoder.parameters())
+    params = list(decoder.parameters()) + list(encoder.parameters())
+    optimizer = torch.optim.Adam(params)
 
     criterion = nn.CrossEntropyLoss()
 
