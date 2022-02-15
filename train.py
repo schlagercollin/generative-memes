@@ -20,7 +20,7 @@ os.environ["TENSORBOARD_LOGGING"] = "1"
 
 if __name__ == "__main__":
 
-    dataset = MemeTemplateDataset(epoch_multiplier=1)
+    dataset = MemeTemplateDataset(epoch_multiplier=500)  # approx 5 min / epoch
 
     dataloader = torch.utils.data.DataLoader(
         dataset,
