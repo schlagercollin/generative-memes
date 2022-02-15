@@ -134,3 +134,5 @@ images
 *.model
 caption-model-ckpts/*.pth
 *.npy
+
+.DS_Store
