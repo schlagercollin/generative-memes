@@ -5,8 +5,10 @@ from PIL import ImageFont
 import torchvision
 from matplotlib.pyplot import imshow
 import numpy as np
+import cv2
+from PIL import Image
 
-to_pil = torchvision.transforms.ToPILImage()
+to_pil = torchvision.transforms.ToPILImage(mode='RGB')
 
 def create_meme(generator,
         encoder,
@@ -25,7 +27,8 @@ def create_meme(generator,
         )
     
 
-    meme_background = generator.forward(x=random_noise)
+    meme_background = generator.forward(*generator.sampler(1, 'cpu'))
+
     features = encoder(meme_background)
 
     _, dummy_cap = next(data_loader)
@@ -33,7 +36,11 @@ def create_meme(generator,
     caption = decoder(features, dummy_cap)
 
     cap = " ".join([word for word in pred_vec_to_text(caption, dataset)[0] if word != "<UNK>"])
-    image = to_pil(meme_background[0])
+    image = meme_background[0].permute(1, 2, 0).detach().numpy()
+    image = cv2.normalize(image, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
+
+    image = image.astype(np.uint8)
+    image = Image.fromarray(image)
     image = image.resize((256, 256))
 
     draw = ImageDraw.Draw(image)
@@ -104,11 +111,9 @@ def create_meme(generator,
             y = lastY + h
             drawTextWithOutline(lines[i], x, y)
             lastY = y
-    
-    ###
 
     drawText(image, cap, "top")
 
-    imshow(np.asarray(image))
+    return image
 
     
