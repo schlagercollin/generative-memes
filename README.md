@@ -1,10 +1,6 @@
 # Deep Generative Memes
 
-Collin Schlager
-
-Harry Mellsop
-
-Randy Quarles
+Authors: `Collin Schlager`, `Harry Mellsop`, `Randy Quarles` 
 
 
 Using GANs to create memes (and soon other image + image caption data!).
