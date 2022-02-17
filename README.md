@@ -29,4 +29,4 @@ Then you can sample memes and their captions via the last cell.
 
 # Dataset
 
-Dataset files are contained in the `scraper` directory. This directory contains a cloned repo of the (ImgFlip575K Memes Dataset)[https://github.com/schesa/ImgFlip575K_Dataset] for convenience. The repo houses code for the ImgFlip scrapper as well as a pre-scraped version of the dataset.
+Dataset files are contained in the `scraper` directory. This directory contains a cloned repo of the [ImgFlip575K Memes Dataset](https://github.com/schesa/ImgFlip575K_Dataset) for convenience. The repo houses code for the ImgFlip scrapper as well as a pre-scraped version of the dataset.
