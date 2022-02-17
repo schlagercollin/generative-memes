@@ -28,7 +28,7 @@ def infer():
         num_workers=workers
     ))
 
-    print("Loaded dataset; now loading model")
+    # print("Loaded dataset; now loading model")
 
     encoder.load_state_dict(
         torch.load(os.path.join(CKPT_PATH, 'encoder-%d.pth' % 440), map_location=torch.device(device))
@@ -40,7 +40,7 @@ def infer():
     encoder.eval()
     decoder.eval()
 
-    print("Successfully loaded model.")
+    # print("Successfully loaded model.")
 
     for i_step, (img, caption) in enumerate(test_data_loader):
         img = img.to(device)
@@ -72,10 +72,10 @@ def gt_vec_to_text(caption, dataset):
 
 def pred_vec_to_text(outputs, dataset):
     sentences = []
-    print(outputs.shape)
+    # print(outputs.shape)
     max_elements = torch.argmax(outputs, axis=2)
-    print(max_elements.shape)
-    print(max_elements)
+    # print(max_elements.shape)
+    # print(max_elements)
 
     for prediction in range(max_elements.shape[0]):
         sentence = []
