@@ -12,6 +12,9 @@ from captionmodel import EncoderCNN, DecoderRNN
 CKPT_PATH = "./caption-model-ckpts"
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+"""
+Method for training the NLP caption portion of the model
+"""
 def train():
 
     dataset = MemeCaptionDataset()
