@@ -98,7 +98,7 @@ def train():
                 captions_target = val_captions[:, 1:].to(device)
                 captions_train = val_captions[:, :val_captions.shape[1]-1].to(device)
 
-                # Move batch of images and captions to GPU if CUDA is available.
+                # If CUDA is available, move batch of images and captions to GPU.
                 val_images = val_images.to(device)
 
                 # Pass the inputs through the CNN-RNN model.
