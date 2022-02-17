@@ -1,8 +1,11 @@
+# Description
+
+This directory is cloned from the ImgFlip575k Memes Dataset repository (see links below).
+It is cloned into our project repo for convenience.
+
 # :clown_face:ImgFlip575K Memes Dataset
 
 [About](#About) | [**Memes Dataset**](#memes-dataset) | [How to run](#how-to-run)
-
-<!--[![HitCount](http://hits.dwyl.com/schesa/ImgFlip575K_Dataset.svg)](http://hits.dwyl.com/schesa/ImgFlip575K_Dataset)-->
 
 ## About
 

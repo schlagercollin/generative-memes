@@ -1,3 +1,9 @@
+"""
+infer_full
+
+Main workhorse function for baseline inference: create_meme.
+"""
+
 import torch
 from infer_caption import pred_vec_to_text
 from PIL import ImageDraw
@@ -18,6 +24,21 @@ def create_meme(generator,
         dataset,
         random_noise=None
     ):
+    """Runs the full inference pipeline for the baseline (separate components)
+    architecture.
+
+    Args:
+        generator: the generator model
+        encoder: the caption encoder model
+        decoder: the caption decoder model
+        data_loader: the data loader
+        device: torch device
+        dataset: the meme caption and image dataset
+        random_noise: random noise to pass to generator Defaults to None.
+
+    Returns:
+        image with overlayed, generated text caption in meme style
+    """
 
     if random_noise is None:
         random_noise = torch.nn.init.trunc_normal_(

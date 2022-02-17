@@ -1,3 +1,10 @@
+"""
+Torch Datasets for Baseline
+
+MemeCaptionDataset ==> for image-conditioned meme caption generation
+MemeTemplateDataset ==> for image generation
+"""
+
 import numpy as np
 import os
 import glob
@@ -19,8 +26,14 @@ IMG_SIZE = (settings.img_size, settings.img_size)
 
 # build Pytorch generator dataset
 class MemeCaptionDataset(Dataset):
-
     def __init__(self, max_seq_length=15, transform=None):
+        """Dataset for the image-conditioned caption generation.
+
+        Args:
+            max_seq_length (int, optional): max sequence length. Defaults to 15.
+            transform (torchvision.Transform, optional): transformations to apply to images.
+            Defaults to None, which corresponds to AutoAugment and resize to settings.img_size.
+        """
         
         if transform is None:
             # default transform
@@ -76,8 +89,6 @@ class MemeCaptionDataset(Dataset):
 
         self.max_seq_length = max_seq_length
 
-        
-
     def download_meme_templates(self):
 
         # ensure that the cache directory has been created
@@ -94,6 +105,11 @@ class MemeCaptionDataset(Dataset):
                 os.system(f"wget -O {self.cache_dir}/{template}.jpg {url}")
 
     def __getitem__(self, index):
+        """
+        Returns:
+            img: image tensor
+            caption_vector: numeric representation of text caption
+        """
         
         template_name, caption = self.memes[index]
         
@@ -119,6 +135,16 @@ class MemeCaptionDataset(Dataset):
 class MemeTemplateDataset(Dataset):
 
     def __init__(self, transform=None, epoch_multiplier=100):
+        """
+
+        Args:
+            transform (torchvision.Transform, optional): transformations to apply to images.
+            Defaults to None, which corresponds to AutoAugment and resize to settings.img_size.
+            epoch_multiplier (int, optional): a mini-hack that artifically increases the size
+            of an epoch (to modulate how frequently `torchgan` does validation) without modifying
+            it's code, since it doesn't appear to have that functionality out of the box.
+            Defaults to 100, which means that the dataset epoch is repeated 100 times.
+        """
         
         if transform is None:
             # default transform
@@ -168,6 +194,10 @@ class MemeTemplateDataset(Dataset):
                 os.system(f"wget -O {self.cache_dir}/{template}.jpg {url}")
 
     def __getitem__(self, index):
+        """
+        Returns:
+            img: image tensor
+        """
         
         # map dataset index to actual image index
         index = index % len(self.images)
@@ -182,12 +212,8 @@ class MemeTemplateDataset(Dataset):
     def __len__(self):
         return len(self.images) * self.epoch_multiplier
 
-def view_img(img):
-    img = transforms.ToPILImage()(img).convert("RGB")
-    img.show()    
 
 if __name__ == "__main__":
-
     caption_dataset = MemeCaptionDataset()
     print(caption_dataset.itos[-5:])
     print(caption_dataset.stoi[caption_dataset.unk])
