@@ -6,6 +6,7 @@ Scripts for model inference.
 """
 import torch
 import utils
+import numpy as np
 
 
 def gt_vec_to_text(caption, dataset):
@@ -29,7 +30,7 @@ def gt_vec_to_text(caption, dataset):
 
 
 def pred_vec_to_text(outputs, dataset):
-    """Convertsword vector representation of prediction to text.
+    """Converts word vector representation of prediction to text.
 
     Args:
         outputs: word vector
@@ -68,7 +69,11 @@ def generate_background(generator, device, noise=None, truncated_normal=False):
 
 def generate_caption(generator_output, encoder, decoder, data_loader, device, dataset):
 
-    features = encoder(generator_output)
+    arr = np.asarray(utils.tensor_to_image(generator_output, ncol=1, padding=0), dtype=np.int32)
+    arr = arr[np.newaxis, :, :, :]
+    arr = torch.from_numpy(arr.transpose(0, 3, 1, 2)).type(torch.FloatTensor)
+
+    features = encoder(arr)
 
     _, dummy_cap = next(data_loader)
     dummy_cap = dummy_cap[:1].to(device)
