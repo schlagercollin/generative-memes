@@ -10,6 +10,54 @@ import torch
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+class RefinedLanguageModel(nn.Module):
+    def __init__(
+        self,
+        decoder_embed_size,
+        decoder_hidden_size,
+        vocab_size,
+        encoder_embed_size=1024
+    ):
+        super(RefinedLanguageModel, self).__init__()
+
+        # save params
+        self.decoder_embed_size = decoder_embed_size
+        self.decoder_hidden_size = decoder_hidden_size
+        self.vocab_size = vocab_size
+        self.encoder_embed_size = encoder_embed_size
+
+        # encoder modules
+        self.densenet = models.densenet121(pretrained=True)
+        self.densenet.classifier = nn.Linear(
+            in_features=1024,
+            out_features=1024
+        )
+        self.embed = nn.Linear(
+            in_features=1024,
+            out_features=encoder_embed_size
+        )
+        self.dropout = nn.Dropout(p=0.5)
+        self.prelu = nn.PReLU()
+
+        # decoder modules
+        self.lstm_cell = nn.LSTMCell(
+            input_size=self.decoder_embed_size,
+            hidden_size=self.decoder_hidden_size
+        )
+
+        # keep going from here
+
+    def forward(self, images):
+        # overall strategy here;
+        # - use the densenet, or ideally can we use InceptionNet pretrained on ILSVRC-2012-CLS
+        # - strip last layer
+        # - this should give us 2048 output dimension vector, map this down to be our hidden dimension size using FC layer
+        # - LSTM cell repeat however many times
+        # - approach based on simplified: https://arxiv.org/pdf/1806.04510.pdf
+        densenet_outputs = self.prelu(self.densenet(images))
+        post_dropout = self.dropout(densenet_outputs)
+        embedded = self.embed(post_dropout)
+
 
 class EncoderCNN(nn.Module):
     def __init__(self, embed_size=1024):

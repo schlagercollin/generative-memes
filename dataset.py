@@ -26,14 +26,17 @@ IMG_SIZE = (settings.img_size, settings.img_size)
 
 # build Pytorch generator dataset
 class MemeCaptionDataset(Dataset):
-    def __init__(self, max_seq_length=15, transform=None):
+    def __init__(self, max_seq_length=25, inclusion_threshold=5, transform=None):
         """Dataset for the image-conditioned caption generation.
 
         Args:
             max_seq_length (int, optional): max sequence length. Defaults to 15.
+            inclusion_threshold (int, optional): minimum number of occurences in dataset for word to be included in vocab. Defaults to 10.
             transform (torchvision.Transform, optional): transformations to apply to images.
             Defaults to None, which corresponds to AutoAugment and resize to settings.img_size.
         """
+
+        self.max_seq_length = max_seq_length
         
         if transform is None:
             # default transform
@@ -67,17 +70,16 @@ class MemeCaptionDataset(Dataset):
                 img = TF.to_tensor(template_image)
                 self.images[template] = img
             
-            text_snippets = []
             for meme in json.load(open(f"{DATASET_PATH}/memes/{template}")):
                 self.memes.append((template, " ".join(meme['boxes'])))  # (template, caption)
 
         def yield_strings():
             for template, caption in self.memes:
-                yield caption.strip().split()
+                yield caption.lower().strip().split()
 
         self.vocab = Vocab.build_vocab_from_iterator(
             yield_strings(),
-            min_freq=10
+            min_freq=inclusion_threshold
         )
 
         self.itos = self.vocab.get_itos()
@@ -87,7 +89,40 @@ class MemeCaptionDataset(Dataset):
         self.itos.append(self.unk)
         self.stoi[self.unk] = len(self.stoi)
 
-        self.max_seq_length = max_seq_length
+        self.start = "<START>"
+        self.itos.append(self.start)
+        self.stoi[self.start] = len(self.stoi)
+
+        self.end = "<END>"
+        self.itos.append(self.end)
+        self.stoi[self.end] = len(self.stoi)
+
+        # prune memes from the dataset that have too many <unk> instances
+
+        pruned_memes = []
+        num_pruned = 0
+        for meme in self.memes:
+            # tokenise using the vocab
+            caption = meme[1]
+            caption_vector = self.tokenize_meme_caption(caption)
+
+            print("TODO: Replace with pretrained GLoVE embeddings here, so we get a matrix")
+
+            # check if the caption has too many <unk> instances
+            if np.sum(caption_vector == self.stoi[self.unk]) < 4:
+                pruned_memes.append(
+                    (meme[0], caption_vector)
+                )
+            else:
+                num_pruned += 1
+
+        self.memes = pruned_memes
+        print(f"Pruned {num_pruned} memes from the dataset due to excess <unk> occurences")
+        print(f"We now have {len(self.memes)} memes remaining in the dataset")
+        print(f"The vocabulary size is of size {len(self.itos)}")
+
+        # for meme_to_print in range(10):
+        #     print(" ".join([self.itos[idx] for idx in self.memes[meme_to_print][1]]))
 
     def download_meme_templates(self):
 
@@ -104,6 +139,29 @@ class MemeCaptionDataset(Dataset):
                 # download the specific meme
                 os.system(f"wget -O {self.cache_dir}/{template}.jpg {url}")
 
+    def tokenize_meme_caption(self, caption):
+        """Tokenize meme caption.
+
+        Args:
+            caption (str): caption to tokenize.
+
+        Returns:
+            caption_vector (np.array): tokenized caption.
+        """
+
+        caption_vector = np.zeros((self.max_seq_length))
+        caption = self.start + " " + caption + " " + self.end
+        caption = caption.strip().split()
+
+        print("TODO: remove punctuation here!")
+
+        for i, word in enumerate(caption):
+            if i >= self.max_seq_length:
+                break
+            caption_vector[i] = self.stoi[word] if word in self.stoi else self.stoi[self.unk]
+
+        return caption_vector.astype(np.int64)
+
     def __getitem__(self, index):
         """
         Returns:
@@ -118,15 +176,7 @@ class MemeCaptionDataset(Dataset):
         if self.transform:
             img = self.transform(img)
 
-        caption_vector = np.zeros((self.max_seq_length))
-        caption = caption.strip().split()
-
-        for i, word in enumerate(caption):
-            if i >= self.max_seq_length:
-                break
-            caption_vector[i] = self.stoi[word] if word in self.stoi else self.stoi[self.unk]
-
-        return img, caption_vector.astype(np.long)
+        return img, caption
     
     def __len__(self):
         return len(self.memes)
@@ -242,7 +292,9 @@ class SimpleMemeTemplateDataset(Dataset):
 
 if __name__ == "__main__":
     caption_dataset = MemeCaptionDataset()
-    print(caption_dataset.itos[-5:])
-    print(caption_dataset.stoi[caption_dataset.unk])
+
+    # print(caption_dataset.memes)
+    # print(caption_dataset.itos[-5:])
+    # print(caption_dataset.stoi[caption_dataset.unk])
     
     
