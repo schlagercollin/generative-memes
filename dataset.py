@@ -27,7 +27,12 @@ IMG_SIZE = (settings.img_size, settings.img_size)
 
 # build Pytorch generator dataset
 class MemeCaptionDataset(Dataset):
-    def __init__(self, max_seq_length=25, inclusion_threshold=5, transform=None):
+    def __init__(
+        self,
+        max_seq_length=25,
+        inclusion_threshold=5,
+        max_unk_per_caption=2,
+        transform=None):
         """Dataset for the image-conditioned caption generation.
 
         Args:
@@ -38,6 +43,7 @@ class MemeCaptionDataset(Dataset):
         """
 
         self.max_seq_length = max_seq_length
+        self.max_unk_per_caption = max_unk_per_caption
         
         if transform is None:
             # default transform
@@ -76,10 +82,7 @@ class MemeCaptionDataset(Dataset):
 
         def yield_strings():
             for template, caption in self.memes:
-                lower_caption = caption.lower()
-                no_punc = re.sub(r'[^\w\s]','', lower_caption)
-                # print(no_punc.strip().split())
-                yield no_punc.strip().split()
+                yield self.clean_caption(caption)
 
         self.vocab = Vocab.build_vocab_from_iterator(
             yield_strings(),
@@ -110,10 +113,8 @@ class MemeCaptionDataset(Dataset):
             caption = meme[1]
             caption_vector = self.tokenize_meme_caption(caption)
 
-            # print("TODO: Replace with pretrained GLoVE embeddings here, so we get a matrix")
-
             # check if the caption has too many <unk> instances
-            if np.sum(caption_vector == self.stoi[self.unk]) < 4:
+            if np.sum(caption_vector == self.stoi[self.unk]) <= self.max_unk_per_caption:
                 pruned_memes.append(
                     (meme[0], caption_vector)
                 )
@@ -127,6 +128,15 @@ class MemeCaptionDataset(Dataset):
 
         # for meme_to_print in range(10):
         #     print(" ".join([self.itos[idx] for idx in self.memes[meme_to_print][1]]))
+
+    def tokenized_to_list_sentence(self, caption_token_vec):
+        return [self.itos[idx] for idx in caption_token_vec]
+
+    def clean_caption(self, caption):
+        lower_caption = caption.lower()
+        no_punc = re.sub(r'[^\w\s]','', lower_caption)
+        # print(no_punc.strip().split())
+        return no_punc.strip().split()
 
     def download_meme_templates(self):
 
@@ -154,10 +164,8 @@ class MemeCaptionDataset(Dataset):
         """
 
         caption_vector = np.zeros((self.max_seq_length))
-        caption = self.start + " " + caption + " " + self.end
-        caption = caption.strip().split()
-
-        # print("TODO: remove punctuation here!")
+        caption = self.clean_caption(caption)
+        caption = [self.start] + caption + [self.end]
 
         for i, word in enumerate(caption):
             if i >= self.max_seq_length:
