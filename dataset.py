@@ -9,6 +9,7 @@ import numpy as np
 import os
 import glob
 import json
+import re
 
 import torchvision.transforms.functional as TF
 from torchvision.transforms.autoaugment import AutoAugmentPolicy 
@@ -75,7 +76,10 @@ class MemeCaptionDataset(Dataset):
 
         def yield_strings():
             for template, caption in self.memes:
-                yield caption.lower().strip().split()
+                lower_caption = caption.lower()
+                no_punc = re.sub(r'[^\w\s]','', lower_caption)
+                # print(no_punc.strip().split())
+                yield no_punc.strip().split()
 
         self.vocab = Vocab.build_vocab_from_iterator(
             yield_strings(),
@@ -292,6 +296,9 @@ class SimpleMemeTemplateDataset(Dataset):
 
 if __name__ == "__main__":
     caption_dataset = MemeCaptionDataset()
+    tokenized = caption_dataset.tokenize_meme_caption("i am a meme")
+    print(tokenized)
+    print(" ".join([caption_dataset.itos[idx] for idx in tokenized]))
 
     # print(caption_dataset.memes)
     # print(caption_dataset.itos[-5:])
