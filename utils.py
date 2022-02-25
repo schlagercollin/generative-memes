@@ -4,6 +4,16 @@ import torchvision.transforms as T
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
 
+def get_preprocessing_normalisation_transform(image_size):
+    return T.Compose([
+        T.ConvertImageDtype(torch.uint8),
+        T.AutoAugment(),
+        T.Resize(image_size),
+        T.ConvertImageDtype(torch.float),
+        T.CenterCrop(image_size),
+        T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
+
 def tensor_to_image(output: torch.Tensor, ncol: int=4, padding: int=2) -> Image:
     """Convert the tensor-based output from a Generator into a PIL image.
     

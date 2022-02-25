@@ -4,7 +4,7 @@ Baseline Captioning Model
 EncoderCNN
 DecoderRNN
 """
-from torchvision import models
+from torchvision import models, transforms
 from torch import nn
 import torch
 
@@ -13,50 +13,58 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 class RefinedLanguageModel(nn.Module):
     def __init__(
         self,
-        decoder_embed_size,
-        decoder_hidden_size,
-        vocab_size,
+        vocab_embed_size=512,
+        decoder_hidden_size=1024,
+        decoder_num_layers=1,
+        vocab_size=234,
         encoder_embed_size=1024
     ):
         super(RefinedLanguageModel, self).__init__()
 
-        # save params
-        self.decoder_embed_size = decoder_embed_size
-        self.decoder_hidden_size = decoder_hidden_size
-        self.vocab_size = vocab_size
-        self.encoder_embed_size = encoder_embed_size
-
         # encoder modules
-        self.densenet = models.densenet121(pretrained=True)
-        self.densenet.classifier = nn.Linear(
-            in_features=1024,
-            out_features=1024
-        )
-        self.embed = nn.Linear(
-            in_features=1024,
-            out_features=encoder_embed_size
-        )
-        self.dropout = nn.Dropout(p=0.5)
-        self.prelu = nn.PReLU()
+        self.encoder_cnn = torch.hub.load('pytorch/vision:v0.10.0', 'inception_v3', pretrained=True)
+        self.encoder_cnn.fc = nn.Identity()             # essentially strip the last layer
+        self.encoder_cnn.requires_grad = False
+
+        self.encoder_to_decoder = nn.Linear(2048, encoder_embed_size)
+        self.embed = nn.Embedding(vocab_size, vocab_embed_size)
 
         # decoder modules
-        self.lstm_cell = nn.LSTMCell(
-            input_size=self.decoder_embed_size,
-            hidden_size=self.decoder_hidden_size
+        self.decoder_lstm = nn.LSTM(
+            input_size=vocab_embed_size + encoder_embed_size,
+            hidden_size=decoder_hidden_size,
+            num_layers=decoder_num_layers,
+            batch_first=True,
         )
+        self.decoder_to_vocab = nn.Linear(decoder_hidden_size, vocab_size)
+        self.output_activation = nn.Softmax(dim=-1)
 
-        # keep going from here
+    def forward(self, images, captions):
+        # we should run a check here and throw a warning if not properly normalised; see instructions:
+        # https://pytorch.org/hub/pytorch_vision_inception_v3/
 
-    def forward(self, images):
-        # overall strategy here;
-        # - use the densenet, or ideally can we use InceptionNet pretrained on ILSVRC-2012-CLS
-        # - strip last layer
-        # - this should give us 2048 output dimension vector, map this down to be our hidden dimension size using FC layer
-        # - LSTM cell repeat however many times
-        # - approach based on simplified: https://arxiv.org/pdf/1806.04510.pdf
-        densenet_outputs = self.prelu(self.densenet(images))
-        post_dropout = self.dropout(densenet_outputs)
-        embedded = self.embed(post_dropout)
+        # extract embeddings from caption batch
+        captions_embed = self.embed(captions)
+        # print(captions_embed.shape)
+
+        # extract image features from image batch
+        embeddings = self.encoder_cnn(images).logits
+        embeddings = self.encoder_to_decoder(embeddings)
+
+        # concatenate image features and caption embeddings at each time step
+        embeddings = embeddings[:, None, :]
+        embeddings = embeddings.repeat(1, captions_embed.size(1), 1)
+        lstm_input = torch.cat([captions_embed, embeddings], dim=2)
+
+        # print(embeddings.shape)
+        # print(lstm_input.shape)
+
+        # pass this through LSTM
+        lstm_output, _ = self.decoder_lstm(lstm_input)
+
+        vocab_output = self.decoder_to_vocab(lstm_output)[:, -1, :]
+        
+        return self.output_activation(vocab_output)
 
 
 class EncoderCNN(nn.Module):
@@ -123,3 +131,17 @@ class DecoderRNN(nn.Module):
             outputs[:, t, :] = out
 
         return outputs
+
+if __name__ == "__main__":
+    test_refined = RefinedLanguageModel()
+    # ds = MemeCaptionDataset()
+    # image, caption = ds[0][0], ds[0][1]
+    # print(image.shape)
+    # print(caption.shape)
+
+    batch_size = 2
+    test_images = torch.rand((batch_size, 3, 512, 512))
+    test_captions = torch.randint(low=0, high=233, size=(batch_size, 25))
+    out = test_refined(test_images, test_captions)
+
+    print(out.shape)

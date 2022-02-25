@@ -188,6 +188,10 @@ class MemeCaptionDataset(Dataset):
         if self.transform:
             img = self.transform(img)
 
+        # this is returning a vector of sequence_length integers; we either need to put this through a one-hot encoding, or take glove embeddings
+
+        # for now, let's just one-hot encode it...
+        
         return img, caption
     
     def __len__(self):
