@@ -106,7 +106,7 @@ class MemeCaptionDataset(Dataset):
             caption = meme[1]
             caption_vector = self.tokenize_meme_caption(caption)
 
-            print("TODO: Replace with pretrained GLoVE embeddings here, so we get a matrix")
+            # print("TODO: Replace with pretrained GLoVE embeddings here, so we get a matrix")
 
             # check if the caption has too many <unk> instances
             if np.sum(caption_vector == self.stoi[self.unk]) < 4:
@@ -153,7 +153,7 @@ class MemeCaptionDataset(Dataset):
         caption = self.start + " " + caption + " " + self.end
         caption = caption.strip().split()
 
-        print("TODO: remove punctuation here!")
+        # print("TODO: remove punctuation here!")
 
         for i, word in enumerate(caption):
             if i >= self.max_seq_length:
