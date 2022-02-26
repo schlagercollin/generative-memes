@@ -133,6 +133,7 @@ runs
 images
 *.model
 caption-model-ckpts/*.pth
+caption-model-v2-ckpts/*.ckpt
 *.npy
 
 .DS_Store

@@ -62,7 +62,7 @@ class RefinedLanguageModel(nn.Module):
         # pass this through LSTM
         lstm_output, _ = self.decoder_lstm(lstm_input)
 
-        vocab_output = self.decoder_to_vocab(lstm_output)[:, -1, :]
+        vocab_output = self.decoder_to_vocab(lstm_output)
         
         return self.output_activation(vocab_output)
 
@@ -145,3 +145,4 @@ if __name__ == "__main__":
     out = test_refined(test_images, test_captions)
 
     print(out.shape)
+    print(out.sum(dim=1))

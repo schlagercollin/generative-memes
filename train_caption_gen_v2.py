@@ -14,7 +14,7 @@ CKPT_PATH = "./caption-model-v2-ckpts"
 BATCH_SIZE = 1
 NUM_WORKERS = 8
 NUM_EPOCHS = 2000
-SAVE_EVERY = 1
+SAVE_EVERY = 10
 
 def train():
     print("Initializing dataset...")
@@ -52,27 +52,29 @@ def train():
 
             # we are doing next-character prediction, so we want to give the model progressively longer
             # input sequences
-            for i in range(1, labels_batch.shape[1] - 1):
-                model.zero_grad()
-                model.train()
+            # for i in range(1, labels_batch.shape[1] - 1):
+            optimizer.zero_grad()
+            model.train()
 
-                output = model(image_batch, labels_batch[:, :i])
-                loss = criterion(output, labels_batch[:, i])
-                losses.append(loss)
-                
-                print_training_stats(
-                    current_epoch=epoch,
-                    total_num_epochs=NUM_EPOCHS,
-                    current_step=i,
-                    total_steps=labels_batch.shape[1] - 1,
-                    current_batch=idx,
-                    total_batches=len(data_loader) // BATCH_SIZE,
-                    train_loss=loss.item()
-                )
+            captions = labels_batch[:, :-1]
+            captions_target = torch.nn.functional.one_hot(labels_batch[:, 1:], vocab_size).double().to(device)
 
-                loss.backward()
-                optimizer.step()
-        
+            output = model(image_batch, captions)
+            loss = criterion(output, captions_target)
+            losses.append(loss.item())
+            
+            print_training_stats(
+                current_epoch=epoch,
+                total_num_epochs=NUM_EPOCHS,
+                current_batch=idx,
+                total_batches=len(data_loader) // BATCH_SIZE,
+                train_loss=loss.item()
+            )
+
+            loss.backward()
+            optimizer.step()
+
+            break
 
         if epoch % SAVE_EVERY == 0:
             torch.save(model.state_dict(), f"{CKPT_PATH}/epoch-{epoch}.ckpt")
@@ -81,13 +83,11 @@ def train():
 def print_training_stats(
     current_epoch,
     total_num_epochs,
-    current_step,
-    total_steps,
     current_batch,
     total_batches,
     train_loss
 ):
-    stats = f"Epoch {current_epoch}/{total_num_epochs} - Current Batch {current_batch}/{total_batches} - Step {current_step}/{total_steps} - Loss: {train_loss} - Other random padding to stop things getting cut off..."
+    stats = f"Epoch {current_epoch}/{total_num_epochs} - Current Batch {current_batch}/{total_batches} - Loss: {train_loss} - Other random padding to stop things getting cut off..."
     print("\r" + stats, end="")
     sys.stdout.flush()
 
