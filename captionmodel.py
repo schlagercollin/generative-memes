@@ -26,7 +26,7 @@ class RefinedLanguageModel(nn.Module):
         # encoder modules
         self.encoder_cnn = torch.hub.load('pytorch/vision:v0.10.0', 'inception_v3', pretrained=True)
         self.encoder_cnn.fc = nn.Identity()             # essentially strip the last layer
-        self.encoder_cnn.requires_grad = False
+        # self.encoder_cnn.requires_grad = False
 
         self.encoder_to_decoder = nn.Linear(2048, encoder_embed_size)
         self.embed = nn.Embedding(vocab_size, vocab_embed_size)
@@ -46,9 +46,9 @@ class RefinedLanguageModel(nn.Module):
         # https://pytorch.org/hub/pytorch_vision_inception_v3/
 
         # extract image features from image batch
-        with torch.no_grad():
-            embeddings = self.encoder_cnn(images)
-            # print(embeddings.shape)
+        # with torch.no_grad():
+        embeddings = self.encoder_cnn(images).logits
+        # print(embeddings.shape)
 
         embeddings = self.encoder_to_decoder(embeddings)
 
