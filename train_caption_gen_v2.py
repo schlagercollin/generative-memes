@@ -8,13 +8,11 @@ from dataset import get_meme_caption_dataset
 from utils import get_preprocessing_normalisation_transform
 from captionmodel import RefinedLanguageModel
 
+from settings import refined_model_vocab_embed_size, refined_model_decoder_hidden_size, refined_model_decoder_num_layers, refined_model_encoder_embed_size, refined_model_batch_size, refined_model_num_epochs, refined_model_save_every, refined_model_num_workers
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 CKPT_PATH = "./caption-model-v2-ckpts"
-BATCH_SIZE = 64
-NUM_WORKERS = 8
-NUM_EPOCHS = 2000
-SAVE_EVERY = 10
 
 def train():
     print("Initializing dataset...")
@@ -25,19 +23,19 @@ def train():
 
     data_loader = torch.utils.data.DataLoader(
         dataset,
-        batch_size=BATCH_SIZE,
+        batch_size=refined_model_batch_size,
         shuffle=True,
-        num_workers=NUM_WORKERS
+        num_workers=refined_model_num_workers
     )
     vocab_size = len(dataset.itos)
 
     print("Initializing model...")
     model = RefinedLanguageModel(
-        vocab_embed_size=512,
-        decoder_hidden_size=1024,
-        decoder_num_layers=1,
+        vocab_embed_size=refined_model_vocab_embed_size,
+        decoder_hidden_size=refined_model_decoder_hidden_size,
+        decoder_num_layers=refined_model_decoder_num_layers,
         vocab_size=vocab_size,
-        encoder_embed_size=1024
+        encoder_embed_size=refined_model_encoder_embed_size
     ).to(device)
 
     print("Initializing optimizer and loss function...")
@@ -49,7 +47,7 @@ def train():
 
     print("Starting training...")
 
-    for epoch in range(NUM_EPOCHS):
+    for epoch in range(refined_model_num_epochs):
         for idx, (image_batch, labels_batch) in enumerate(data_loader):
             image_batch = image_batch.to(device)
             labels_batch = labels_batch.to(device)
@@ -67,7 +65,7 @@ def train():
             
             print_training_stats(
                 current_epoch=epoch,
-                total_num_epochs=NUM_EPOCHS,
+                total_num_epochs=refined_model_num_epochs,
                 current_batch=idx,
                 total_batches=len(data_loader),
                 train_loss=loss.item()
@@ -76,7 +74,7 @@ def train():
             loss.backward()
             optimizer.step()
 
-        if epoch % SAVE_EVERY == 0:
+        if epoch % refined_model_save_every == 0:
             # ensure that we have the relevant directories created
             os.makedirs(CKPT_PATH, exist_ok=True)
 

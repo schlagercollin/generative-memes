@@ -4,11 +4,13 @@ Baseline Captioning Model
 EncoderCNN
 DecoderRNN
 """
-from torchvision import models, transforms
+from torchvision import models
 from torch import nn
 import torch
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+# Our most modern language model
 
 class RefinedLanguageModel(nn.Module):
     def __init__(
@@ -45,8 +47,9 @@ class RefinedLanguageModel(nn.Module):
 
         # extract image features from image batch
         with torch.no_grad():
-            embeddings = self.encoder_cnn(images).logits
-            
+            embeddings = self.encoder_cnn(images)
+            # print(embeddings.shape)
+
         embeddings = self.encoder_to_decoder(embeddings)
 
         # concatenate image features and caption embeddings at each time step
@@ -62,6 +65,7 @@ class RefinedLanguageModel(nn.Module):
         
         return self.output_activation(vocab_output)
 
+# Our older language models
 
 class EncoderCNN(nn.Module):
     def __init__(self, embed_size=1024):
