@@ -17,13 +17,49 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from torchtext import vocab as Vocab
 import torch
+import pickle as pkl
+import os
 
 from PIL import Image
 
 import settings
 
 DATASET_PATH = 'scraper/dataset/'
+DATASET_CACHE_LOC = './dataset_cache/dataset.db'
 IMG_SIZE = (settings.img_size, settings.img_size)
+
+def get_meme_caption_dataset(
+    max_seq_length=25,
+    inclusion_threshold=5,
+    max_unk_per_caption=2,
+    transform=None
+):
+    """
+    Returns a dataset of image-conditioned caption generation, with disk caching.
+    """
+
+    def gen_new_dataset():
+        return MemeCaptionDataset(
+            max_seq_length=max_seq_length,
+            inclusion_threshold=inclusion_threshold,
+            max_unk_per_caption=max_unk_per_caption,
+            transform=transform
+        )
+
+    if os.path.exists(DATASET_CACHE_LOC):
+        with open(DATASET_CACHE_LOC, 'rb') as f:
+            dataset = pkl.load(f)
+
+        if dataset.max_seq_length != max_seq_length or dataset.inclusion_threshold != inclusion_threshold or dataset.max_unk_per_caption != max_unk_per_caption:
+            dataset = gen_new_dataset()
+
+    else:
+        dataset = gen_new_dataset()
+
+    with open(DATASET_CACHE_LOC, 'wb') as f:
+        pkl.dump(dataset, f)
+
+    return dataset
 
 # build Pytorch generator dataset
 class MemeCaptionDataset(Dataset):
@@ -44,6 +80,7 @@ class MemeCaptionDataset(Dataset):
 
         self.max_seq_length = max_seq_length
         self.max_unk_per_caption = max_unk_per_caption
+        self.inclusion_threshold = inclusion_threshold
         
         if transform is None:
             # default transform

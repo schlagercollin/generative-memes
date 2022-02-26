@@ -4,23 +4,25 @@ import sys
 import numpy as np
 from torchvision import transforms
 
-from dataset import MemeCaptionDataset
+from dataset import get_meme_caption_dataset
 from utils import get_preprocessing_normalisation_transform
 from captionmodel import RefinedLanguageModel
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 CKPT_PATH = "./caption-model-v2-ckpts"
-BATCH_SIZE = 1
+BATCH_SIZE = 64
 NUM_WORKERS = 8
 NUM_EPOCHS = 2000
 SAVE_EVERY = 10
 
 def train():
     print("Initializing dataset...")
-    dataset = MemeCaptionDataset(
+
+    dataset = get_meme_caption_dataset(
         transform=get_preprocessing_normalisation_transform(image_size=512)
     )
+
     data_loader = torch.utils.data.DataLoader(
         dataset,
         batch_size=BATCH_SIZE,
@@ -50,16 +52,13 @@ def train():
             image_batch = image_batch.to(device)
             labels_batch = labels_batch.to(device)
 
-            # we are doing next-character prediction, so we want to give the model progressively longer
-            # input sequences
-            # for i in range(1, labels_batch.shape[1] - 1):
             optimizer.zero_grad()
             model.zero_grad()
             model.train()
 
             captions = labels_batch[:, :-1]
             captions_target = torch.nn.functional.one_hot(labels_batch[:, 1:], vocab_size).double().to(device)
-
+            
             output = model(image_batch, captions)
             loss = criterion(output, captions_target)
             losses.append(loss.item())
@@ -68,14 +67,12 @@ def train():
                 current_epoch=epoch,
                 total_num_epochs=NUM_EPOCHS,
                 current_batch=idx,
-                total_batches=len(data_loader) // BATCH_SIZE,
+                total_batches=len(data_loader),
                 train_loss=loss.item()
             )
 
             loss.backward()
             optimizer.step()
-
-            break
 
         if epoch % SAVE_EVERY == 0:
             torch.save(model.state_dict(), f"{CKPT_PATH}/epoch-{epoch}.ckpt")

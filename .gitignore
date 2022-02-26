@@ -135,5 +135,6 @@ images
 caption-model-ckpts/*.pth
 caption-model-v2-ckpts/*.ckpt
 *.npy
+dataset_cache/dataset.db
 
 .DS_Store
