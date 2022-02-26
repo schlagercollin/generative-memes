@@ -54,6 +54,7 @@ def train():
             # input sequences
             # for i in range(1, labels_batch.shape[1] - 1):
             optimizer.zero_grad()
+            model.zero_grad()
             model.train()
 
             captions = labels_batch[:, :-1]

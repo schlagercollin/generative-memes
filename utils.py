@@ -1,6 +1,8 @@
 import torch
 import torchvision
-import torchvision.transforms as T 
+import torchvision.transforms as T
+import numpy as np
+from matplotlib import pyplot as plt
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
 
@@ -131,3 +133,9 @@ class Meme:
                 stroke_fill=self.stroke_fill
             )  # Drawing the text character by character. This way spacing can be added between letters
             x += w + self.letSpacing #The next character must be drawn at an x position more to the right
+
+if __name__ == '__main__':
+    arr = np.load('losses.npy')
+    x = np.arange(0, arr.shape[0])
+    plt.plot(x, arr)
+    plt.show()

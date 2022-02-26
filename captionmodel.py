@@ -43,21 +43,17 @@ class RefinedLanguageModel(nn.Module):
         # we should run a check here and throw a warning if not properly normalised; see instructions:
         # https://pytorch.org/hub/pytorch_vision_inception_v3/
 
-        # extract embeddings from caption batch
-        captions_embed = self.embed(captions)
-        # print(captions_embed.shape)
-
         # extract image features from image batch
-        embeddings = self.encoder_cnn(images).logits
+        with torch.no_grad():
+            embeddings = self.encoder_cnn(images).logits
+            
         embeddings = self.encoder_to_decoder(embeddings)
 
         # concatenate image features and caption embeddings at each time step
         embeddings = embeddings[:, None, :]
+        captions_embed = self.embed(captions)
         embeddings = embeddings.repeat(1, captions_embed.size(1), 1)
         lstm_input = torch.cat([captions_embed, embeddings], dim=2)
-
-        # print(embeddings.shape)
-        # print(lstm_input.shape)
 
         # pass this through LSTM
         lstm_output, _ = self.decoder_lstm(lstm_input)
