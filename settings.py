@@ -15,7 +15,7 @@ caption_save_every = 20
 # Refined language model default params
 refined_model_vocab_embed_size      = 512
 refined_model_decoder_hidden_size   = 1024
-refined_model_decoder_num_layers    = 1
+refined_model_decoder_num_layers    = 3
 refined_model_encoder_embed_size    = 1024
 
 # Refined model training settings

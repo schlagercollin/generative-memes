@@ -79,7 +79,7 @@ def train():
             os.makedirs(CKPT_PATH, exist_ok=True)
 
             # save both the model parameters and the loss history
-            torch.save(model.state_dict(), f"{CKPT_PATH}/epoch-{epoch}.ckpt")
+            torch.save(model.state_dict(), f"{CKPT_PATH}/v3-epoch-{epoch}.ckpt")
             np.save(f"{CKPT_PATH}/losses", np.array(losses))
 
 def print_training_stats(
