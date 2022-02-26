@@ -25,7 +25,7 @@ from PIL import Image
 import settings
 
 DATASET_PATH = 'scraper/dataset/'
-DATASET_CACHE_LOC = './dataset_cache/dataset.db'
+DATASET_CACHE_LOC = './dataset_cache'
 IMG_SIZE = (settings.img_size, settings.img_size)
 
 def get_meme_caption_dataset(
@@ -46,8 +46,8 @@ def get_meme_caption_dataset(
             transform=transform
         )
 
-    if os.path.exists(DATASET_CACHE_LOC):
-        with open(DATASET_CACHE_LOC, 'rb') as f:
+    if os.path.exists(DATASET_CACHE_LOC + '/dataset.db'):
+        with open(DATASET_CACHE_LOC + '/dataset.db', 'rb') as f:
             dataset = pkl.load(f)
 
         if dataset.max_seq_length != max_seq_length or dataset.inclusion_threshold != inclusion_threshold or dataset.max_unk_per_caption != max_unk_per_caption:
@@ -56,7 +56,8 @@ def get_meme_caption_dataset(
     else:
         dataset = gen_new_dataset()
 
-    with open(DATASET_CACHE_LOC, 'wb') as f:
+    os.makedirs(DATASET_CACHE_LOC, exist_ok=True)
+    with open(DATASET_CACHE_LOC + '/dataset.db', 'wb') as f:
         pkl.dump(dataset, f)
 
     return dataset

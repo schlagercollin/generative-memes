@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import sys
 import numpy as np
-from torchvision import transforms
+import os
 
 from dataset import get_meme_caption_dataset
 from utils import get_preprocessing_normalisation_transform
@@ -47,6 +47,8 @@ def train():
 
     losses = []
 
+    print("Starting training...")
+
     for epoch in range(NUM_EPOCHS):
         for idx, (image_batch, labels_batch) in enumerate(data_loader):
             image_batch = image_batch.to(device)
@@ -75,8 +77,12 @@ def train():
             optimizer.step()
 
         if epoch % SAVE_EVERY == 0:
+            # ensure that we have the relevant directories created
+            os.makedirs(CKPT_PATH, exist_ok=True)
+
+            # save both the model parameters and the loss history
             torch.save(model.state_dict(), f"{CKPT_PATH}/epoch-{epoch}.ckpt")
-            np.save("losses", np.array(losses))
+            np.save(f"{CKPT_PATH}/losses", np.array(losses))
 
 def print_training_stats(
     current_epoch,
