@@ -47,7 +47,7 @@ class RefinedLanguageModel(nn.Module):
 
         # extract image features from image batch
         # with torch.no_grad():
-        embeddings = self.encoder_cnn(images).logits
+        embeddings = self.encoder_cnn(images)
         # print(embeddings.shape)
 
         embeddings = self.encoder_to_decoder(embeddings)

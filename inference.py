@@ -85,6 +85,71 @@ def generate_caption(generator_output, encoder, decoder, data_loader, device, da
     
     return text_caption
 
+
+def generate_caption_v2_beam_search(
+        generator_output,
+        model,
+        dataset,
+        device,
+        length_to_generate,
+        beam_search_temperature=2.5,
+        branch_factor=10
+):
+    assert generator_output.shape[0] == 1, "This function currently only supports a batch size of 1"
+
+    # first we'll need to apply the appropriate transforms to the input tensor
+    transform = get_preprocessing_normalisation_transform(image_size=512)
+    generator_output = transform(generator_output)
+    
+    # begin with the start token, which should occur with certainty
+    best_captions = [(torch.LongTensor([[dataset.stoi[dataset.start]]]).to(device), 1, False)]
+
+    def generate_next_caption_from_base_caption(
+        base_caption
+    ):
+        out = model(generator_output, base_caption)
+        out = out[0, -1, :]
+        next_word_idx = torch.argsort(out, descending=True)
+        next_word_idx = next_word_idx[:100]
+        next_word_probs = out[next_word_idx]
+        next_word_probs = next_word_probs ** (1 / beam_search_temperature) / torch.sum(next_word_probs ** (1 / beam_search_temperature))
+        index_to_choose = torch.multinomial(next_word_probs, 1)
+        next_word_idx = next_word_idx[index_to_choose]
+        caption = torch.cat([base_caption, torch.LongTensor([[next_word_idx]]).to(device)], dim=1)
+
+        # option 1: weight the guess by MLE
+        # probs = out[next_word_idx]
+
+        #option 2: weight the guess by the Temperature modified probs
+        probs = next_word_probs[index_to_choose]
+        return caption, probs, dataset.stoi[dataset.end] == next_word_idx
+
+    # feed the image and the start token to the model
+    for i in range(length_to_generate):
+        new_captions = []
+        for caption, current_prob, is_done in tqdm(best_captions, desc=f"Generating captions of length {i}/{length_to_generate}"):
+            if not is_done:
+                # provide some suggestions on how to extend the caption
+                for _ in range(branch_factor):
+                    extended_caption, marginal_prob, done = generate_next_caption_from_base_caption(caption)
+                    marginal_prob = current_prob + np.log(marginal_prob.detach().numpy())
+                    new_captions.append((extended_caption, marginal_prob, done))
+            else:
+                # caption is done generating; just persist the caption
+                new_captions.append((caption, current_prob, is_done))
+
+        best_captions = sorted(new_captions, key=lambda x: x[1], reverse=True)[:branch_factor]
+
+    # option 1: choose the predicted best caption
+    overall_best_caption = sorted(best_captions, key=lambda x: x[1], reverse=True)[0][0]
+    english_caption = [dataset.itos[idx] for idx in overall_best_caption.squeeze()]
+
+    all_captions = []
+    for caption, _, _ in best_captions:
+        all_captions.append(" ".join([dataset.itos[idx] for idx in caption.squeeze()]))
+
+    return " ".join(english_caption), all_captions
+
 def generate_caption_v2(
         generator_output,
         model,
@@ -92,6 +157,7 @@ def generate_caption_v2(
         dataset,
         device,
         length_to_generate,
+        beam_search_temperature=2
 ):
     """Generates caption from generator output.
 
@@ -102,6 +168,8 @@ def generate_caption_v2(
         dataset: dataset
         device: device
     """
+
+    assert generator_output.shape[0] == 1, "This function currently only supports a batch size of 1"
 
     # first we'll need to apply the appropriate transforms to the input tensor
     transform = get_preprocessing_normalisation_transform(image_size=512)
@@ -121,9 +189,30 @@ def generate_caption_v2(
         out = model(generator_output, caption)
 
         # print("Model output shape", out.shape)
+
+        # extract the probability distribution over the next words
+        out = out[0, -1, :]
         
-        # extract the final prediction
-        next_word_idx = torch.argmax(out, dim=2)[:, -1]
+        # extract the final prediction, by sampling from distribution over the 100 most probable words
+        
+        # indices of the 100 most probable words
+        next_word_idx = torch.argsort(out, descending=True)
+        next_word_idx = next_word_idx[:100]
+
+        # probabilities of the indices in next_word_idx
+        next_word_probs = out[next_word_idx]
+
+        # rebalance the probabilities using a temperature change
+        next_word_probs = next_word_probs ** (1 / beam_search_temperature) / torch.sum(next_word_probs ** (1 / beam_search_temperature))
+
+        # now we sample from the distribution
+        index_to_choose = torch.multinomial(next_word_probs, 1)
+        print(index_to_choose)
+
+        print(next_word_idx.shape)
+
+        next_word_idx = next_word_idx[index_to_choose]
+
         # print(next_word_idx.shape)
         english_word = dataset.itos[next_word_idx]
         
@@ -173,7 +262,7 @@ if __name__ == "__main__":
 
     from settings import refined_model_vocab_embed_size, refined_model_decoder_hidden_size, refined_model_decoder_num_layers, refined_model_encoder_embed_size
 
-    MODEL_PARAMS_TO_LOAD = 'epoch-1.ckpt'
+    MODEL_PARAMS_TO_LOAD = 'v3-epoch-0.ckpt'
     MODEL_CKPT_PATH = f'./caption-model-v2-ckpts/{MODEL_PARAMS_TO_LOAD}'
 
     dataset = get_meme_caption_dataset()
@@ -203,4 +292,16 @@ if __name__ == "__main__":
     out = torch.rand((1, 3, 64, 64))
     print(out.shape)
 
-    caption = generate_caption_v2(out, model, data_loader, dataset, device, 10)
+    # caption = generate_caption_v2(out, model, data_loader, dataset, device, 10)
+    # print(caption)
+
+    best_caption, all_captions = generate_caption_v2_beam_search(
+        out,
+        model,
+        dataset,
+        device,
+        length_to_generate=10
+    )
+
+    print(all_captions)
+    print(best_caption)
