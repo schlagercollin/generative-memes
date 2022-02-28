@@ -142,7 +142,10 @@ def generate_caption_v2_beam_search(
 
     # option 1: choose the predicted best caption
     overall_best_caption = sorted(best_captions, key=lambda x: x[1], reverse=True)[0][0]
-    english_caption = [dataset.itos[idx] for idx in overall_best_caption.squeeze()]
+    english_caption = []
+    for idx in overall_best_caption.squeeze():
+        if idx != dataset.stoi[dataset.start] and idx != dataset.stoi[dataset.end]:
+            english_caption.append(dataset.itos[idx])
 
     all_captions = []
     for caption, _, _ in best_captions:
@@ -242,11 +245,24 @@ def generate_meme(generator, encoder, decoder, data_loader, device, dataset, noi
     
     return meme_img
 
-def generate_meme_v2(generator, model, data_loader, device, dataset, noise=None, truncated_normal=False):
+def generate_meme_v2(generator, model, data_loader, device, dataset, noise=None, truncated_normal=False, beam_search=True, custom_caption=None):
     
     generator_out = generate_background(generator, device, noise, truncated_normal)
-    caption = generate_caption_v2(generator_out, model, data_loader, dataset, device, 10)
-    print(generator_out.mean())
+    if custom_caption is not None:
+        caption = custom_caption
+    elif beam_search:
+        caption, _ = generate_caption_v2_beam_search(
+            generator_out,
+            model,
+            dataset,
+            device,
+            length_to_generate=10,
+            beam_search_temperature=2,
+            branch_factor=1
+        )
+    else:
+        caption = generate_caption_v2(generator_out, model, data_loader, dataset, device, 10)
+    # print(generator_out.mean())
     generator_img = utils.tensor_to_image(generator_out)
 
     meme = utils.Meme(caption, generator_img)

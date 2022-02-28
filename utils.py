@@ -71,8 +71,10 @@ class Meme:
         self.img = self.createImage(image)
         self.d = ImageDraw.Draw(self.img)
 
+        print("Real caption for this meme:", caption)
+
         self.splitCaption = textwrap.wrap(caption, width=20)  # The text can be wider than the img. If thats the case split the text into multiple lines
-        self.splitCaption.reverse()                           # Draw the lines of text from the bottom up
+        # self.splitCaption.reverse()                           # Draw the lines of text from the bottom up
 
         fontSize = self.fontBase+10 if len(self.splitCaption) <= 1 else self.fontBase   #If there is only one line, make the text a bit larger
         self.font = ImageFont.truetype(font=self.fontfile, size=fontSize)
