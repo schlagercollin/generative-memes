@@ -120,7 +120,7 @@ def generate_caption_v2_beam_search(
         # option 1: weight the guess by MLE
         # probs = out[next_word_idx]
 
-        #option 2: weight the guess by the Temperature modified probs
+        # option 2: weight the guess by the Temperature modified probs
         probs = next_word_probs[index_to_choose]
         return caption, probs, dataset.stoi[dataset.end] == next_word_idx
 
@@ -176,14 +176,10 @@ def generate_caption_v2(
 
     # first we'll need to apply the appropriate transforms to the input tensor
     transform = get_preprocessing_normalisation_transform(image_size=512)
-    # print("Generator output shape", generator_output.shape)
-
     generator_output = transform(generator_output)
-    # print("Generator output shape after rescaling", generator_output.shape)
     
     # begin with the start token
     caption = torch.LongTensor([[dataset.stoi[dataset.start]]]).to(device)
-    # print("Caption shape", caption.shape)
 
     english_caption = []
 
@@ -191,12 +187,8 @@ def generate_caption_v2(
     for i in tqdm(range(length_to_generate)):
         out = model(generator_output, caption)
 
-        # print("Model output shape", out.shape)
-
         # extract the probability distribution over the next words
         out = out[0, -1, :]
-        
-        # extract the final prediction, by sampling from distribution over the 100 most probable words
         
         # indices of the 100 most probable words
         next_word_idx = torch.argsort(out, descending=True)
@@ -210,23 +202,14 @@ def generate_caption_v2(
 
         # now we sample from the distribution
         index_to_choose = torch.multinomial(next_word_probs, 1)
-        print(index_to_choose)
-
-        print(next_word_idx.shape)
-
         next_word_idx = next_word_idx[index_to_choose]
-
-        # print(next_word_idx.shape)
         english_word = dataset.itos[next_word_idx]
-        
-        # print(f"Next word: {dataset.itos[next_word_idx]}")
         english_caption.append(english_word)
 
         if english_word == dataset.end:
             break
 
         caption = torch.cat([caption, torch.LongTensor([[next_word_idx]]).to(device)], dim=1)
-        # print(caption.shape)
 
     return " ".join(english_caption)
        
@@ -262,62 +245,10 @@ def generate_meme_v2(generator, model, data_loader, device, dataset, noise=None,
         )
     else:
         caption = generate_caption_v2(generator_out, model, data_loader, dataset, device, 10)
-    # print(generator_out.mean())
+    
     generator_img = utils.tensor_to_image(generator_out)
 
     meme = utils.Meme(caption, generator_img)
     meme_img = meme.draw()
     
     return meme_img
-
-# delete all of this vvvvv
-if __name__ == "__main__":
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    from dataset import get_meme_caption_dataset
-    from captionmodel import RefinedLanguageModel
-
-    from settings import refined_model_vocab_embed_size, refined_model_decoder_hidden_size, refined_model_decoder_num_layers, refined_model_encoder_embed_size
-
-    MODEL_PARAMS_TO_LOAD = 'v3-epoch-0.ckpt'
-    MODEL_CKPT_PATH = f'./caption-model-v2-ckpts/{MODEL_PARAMS_TO_LOAD}'
-
-    dataset = get_meme_caption_dataset()
-    vocab_size = len(dataset.itos)
-
-    data_loader = torch.utils.data.DataLoader(
-        dataset,
-        batch_size=1,
-        shuffle=True,
-        num_workers=1
-    )
-
-    model = RefinedLanguageModel(
-                vocab_embed_size=refined_model_vocab_embed_size,
-                decoder_hidden_size=refined_model_decoder_hidden_size,
-                decoder_num_layers=refined_model_decoder_num_layers,
-                vocab_size=vocab_size,
-                encoder_embed_size=refined_model_encoder_embed_size
-            ).to(device)
-
-    model.load_state_dict(
-        torch.load(MODEL_CKPT_PATH, map_location=torch.device(device))
-    )
-
-    model.eval()
-
-    out = torch.rand((1, 3, 64, 64))
-    print(out.shape)
-
-    # caption = generate_caption_v2(out, model, data_loader, dataset, device, 10)
-    # print(caption)
-
-    best_caption, all_captions = generate_caption_v2_beam_search(
-        out,
-        model,
-        dataset,
-        device,
-        length_to_generate=10
-    )
-
-    print(all_captions)
-    print(best_caption)

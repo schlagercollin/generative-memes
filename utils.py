@@ -7,6 +7,14 @@ from PIL import Image, ImageDraw, ImageFont
 import textwrap
 
 def get_preprocessing_normalisation_transform(image_size):
+    """Get a torchvision transform to preprocess images for the Generator.
+
+    Args:
+        image_size (int): size of the output image W, H
+
+    Returns:
+        list of word captions
+    """
     return T.Compose([
         T.ConvertImageDtype(torch.uint8),
         T.AutoAugment(),
