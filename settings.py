@@ -22,4 +22,4 @@ refined_model_encoder_embed_size    = 1024
 refined_model_batch_size            = 64
 refined_model_num_workers           = 8
 refined_model_num_epochs            = 2000
-refined_model_save_every            = 20
+refined_model_save_every            = 1
