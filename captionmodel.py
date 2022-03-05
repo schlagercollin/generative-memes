@@ -10,6 +10,122 @@ import torch
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+# Our most modern language model
+
+class RefinedLanguageModel(nn.Module):
+    def __init__(
+        self,
+        vocab_embed_size=512,
+        decoder_hidden_size=1024,
+        decoder_num_layers=1,
+        vocab_size=234,
+        encoder_embed_size=1024
+    ):
+        super(RefinedLanguageModel, self).__init__()
+
+        # encoder modules
+        self.encoder_cnn = torch.hub.load('pytorch/vision:v0.10.0', 'inception_v3', pretrained=True)
+        self.encoder_cnn.fc = nn.Identity()             # essentially strip the last layer
+
+        self.encoder_to_decoder = nn.Linear(2048, encoder_embed_size)
+        self.embed = nn.Embedding(vocab_size, vocab_embed_size)
+
+        # decoder modules
+        self.decoder_lstm = nn.LSTM(
+            input_size=vocab_embed_size + encoder_embed_size,
+            hidden_size=decoder_hidden_size,
+            num_layers=decoder_num_layers,
+            batch_first=True,
+        )
+        self.decoder_to_vocab = nn.Linear(decoder_hidden_size, vocab_size)
+        self.output_activation = nn.Softmax(dim=-1)
+
+    def forward(self, images, captions):
+        # we should run a check here and throw a warning if not properly normalised; see instructions:
+        # https://pytorch.org/hub/pytorch_vision_inception_v3/
+
+        # TODO: fix this brother
+        # extract image features from image batch
+        # if self.eval:
+        #     embeddings = self.encoder_cnn(images)
+        # else:
+        with torch.no_grad():
+            embeddings = self.encoder_cnn(images).logits
+
+        embeddings = self.encoder_to_decoder(embeddings)
+
+        # concatenate image features and caption embeddings at each time step
+        embeddings = embeddings[:, None, :]
+        captions_embed = self.embed(captions)
+        embeddings = embeddings.repeat(1, captions_embed.size(1), 1)
+        lstm_input = torch.cat([captions_embed, embeddings], dim=2)
+
+        # pass this through LSTM
+        lstm_output, _ = self.decoder_lstm(lstm_input)
+        vocab_output = self.decoder_to_vocab(lstm_output)
+        
+        return self.output_activation(vocab_output)
+
+class LanguageModelDiscriminator(nn.Module):
+    def __init__(
+        self,
+        vocab_embed_size=512,
+        decoder_hidden_size=1024,
+        decoder_num_layers=1,
+        vocab_size=234,
+        encoder_embed_size=1024
+    ):
+        super(LanguageModelDiscriminator, self).__init__()
+
+        # encoder modules
+        self.encoder_cnn = torch.hub.load('pytorch/vision:v0.10.0', 'inception_v3', pretrained=True)
+        self.encoder_cnn.fc = nn.Identity()             # essentially strip the last layer
+
+        self.encoder_to_decoder = nn.Linear(2048, encoder_embed_size)
+        self.embed = nn.Embedding(vocab_size, vocab_embed_size)
+
+        # decoder modules
+        self.decoder_lstm = nn.LSTM(
+            input_size=vocab_embed_size + encoder_embed_size,
+            hidden_size=decoder_hidden_size,
+            num_layers=decoder_num_layers,
+            batch_first=True,
+        )
+        self.decoder_to_vocab = nn.Linear(decoder_hidden_size, vocab_size)
+        self.output_activation = nn.Softmax(dim=-1)
+
+    def forward(self, images, captions, next_words):
+        # TODO: fix this brother
+
+        # if self.eval:
+        #     embeddings = self.encoder_cnn(images)
+        # else:
+        with torch.no_grad():
+            embeddings = self.encoder_cnn(images).logits
+
+        # embeddings is a 2048 vector, we want to project that onto some arbitrary vector space
+        embeddings = self.encoder_to_decoder(embeddings)
+
+        # concatenate image features and caption embeddings at each time step
+        embeddings = embeddings[:, None, :]
+        captions_embed = self.embed(captions)
+        embeddings = embeddings.repeat(1, captions_embed.size(1), 1)
+        lstm_input = torch.cat([captions_embed, embeddings], dim=2)
+
+        # pass this through LSTM
+        lstm_output, _ = self.decoder_lstm(lstm_input)
+
+        # extract predictions over the final word output
+        final_outputs = lstm_output[:, -1, :]
+
+        # linear layer that projects final_outputs onto vocab size
+        vocab_output = self.output_activation(self.decoder_to_vocab(final_outputs))
+
+        # would be nice to change this to use indexing instead
+        # TODO: fix this brother
+        return torch.einsum('bi,bi->b', vocab_output, next_words)
+
+# Our older language models
 
 class EncoderCNN(nn.Module):
     def __init__(self, embed_size=1024):
@@ -75,3 +191,14 @@ class DecoderRNN(nn.Module):
             outputs[:, t, :] = out
 
         return outputs
+
+if __name__ == "__main__":
+    test_refined = RefinedLanguageModel()
+
+    batch_size = 2
+    test_images = torch.rand((batch_size, 3, 512, 512))
+    test_captions = torch.randint(low=0, high=233, size=(batch_size, 25))
+    out = test_refined(test_images, test_captions)
+
+    print(out.shape)
+    print(out.sum(dim=1))

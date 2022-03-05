@@ -1,8 +1,28 @@
 import torch
 import torchvision
-import torchvision.transforms as T 
+import torchvision.transforms as T
+import numpy as np
+from matplotlib import pyplot as plt
 from PIL import Image, ImageDraw, ImageFont
 import textwrap
+
+def get_preprocessing_normalisation_transform(image_size):
+    """Get a torchvision transform to preprocess images for the Generator.
+
+    Args:
+        image_size (int): size of the output image W, H
+
+    Returns:
+        list of word captions
+    """
+    return T.Compose([
+        T.ConvertImageDtype(torch.uint8),
+        T.AutoAugment(),
+        T.Resize(image_size),
+        T.ConvertImageDtype(torch.float),
+        T.CenterCrop(image_size),
+        T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ])
 
 def tensor_to_image(output: torch.Tensor, ncol: int=4, padding: int=2) -> Image:
     """Convert the tensor-based output from a Generator into a PIL image.
@@ -59,8 +79,10 @@ class Meme:
         self.img = self.createImage(image)
         self.d = ImageDraw.Draw(self.img)
 
+        print("Real caption for this meme:", caption)
+
         self.splitCaption = textwrap.wrap(caption, width=20)  # The text can be wider than the img. If thats the case split the text into multiple lines
-        self.splitCaption.reverse()                           # Draw the lines of text from the bottom up
+        # self.splitCaption.reverse()                           # Draw the lines of text from the bottom up
 
         fontSize = self.fontBase+10 if len(self.splitCaption) <= 1 else self.fontBase   #If there is only one line, make the text a bit larger
         self.font = ImageFont.truetype(font=self.fontfile, size=fontSize)
@@ -121,3 +143,9 @@ class Meme:
                 stroke_fill=self.stroke_fill
             )  # Drawing the text character by character. This way spacing can be added between letters
             x += w + self.letSpacing #The next character must be drawn at an x position more to the right
+
+if __name__ == '__main__':
+    arr = np.load('losses.npy')
+    x = np.arange(0, arr.shape[0])
+    plt.plot(x, arr)
+    plt.show()
