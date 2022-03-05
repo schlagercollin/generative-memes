@@ -49,7 +49,8 @@ class RefinedLanguageModel(nn.Module):
         # if self.eval:
         #     embeddings = self.encoder_cnn(images)
         # else:
-        embeddings = self.encoder_cnn(images).logits
+        with torch.no_grad():
+            embeddings = self.encoder_cnn(images).logits
 
         embeddings = self.encoder_to_decoder(embeddings)
 
@@ -99,7 +100,8 @@ class LanguageModelDiscriminator(nn.Module):
         # if self.eval:
         #     embeddings = self.encoder_cnn(images)
         # else:
-        embeddings = self.encoder_cnn(images).logits
+        with torch.no_grad():
+            embeddings = self.encoder_cnn(images).logits
 
         # embeddings is a 2048 vector, we want to project that onto some arbitrary vector space
         embeddings = self.encoder_to_decoder(embeddings)

@@ -19,7 +19,7 @@ refined_model_decoder_num_layers    = 3
 refined_model_encoder_embed_size    = 1024
 
 # Refined model training settings
-refined_model_batch_size            = 128
+refined_model_batch_size            = 32
 refined_model_num_workers           = 8
 refined_model_num_epochs            = 2000
 refined_model_save_every            = 1
