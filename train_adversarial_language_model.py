@@ -65,8 +65,8 @@ def train():
         disc_loss = '-'
         with tqdm(data_loader, desc=f"Epoch {epoch}/{refined_model_num_epochs} | Gen Loss: {gen_loss} | Disc Loss: {disc_loss}") as pbar:
             for real_images, real_captions in pbar:
-                real_images.to(device)
-                real_captions.to(device)
+                real_images = real_images.to(device)
+                real_captions = real_captions.to(device)
 
                 generator.train()
                 discriminator.train()
