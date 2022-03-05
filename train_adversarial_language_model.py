@@ -5,7 +5,7 @@
 import torch
 import sys
 
-from settings import refined_model_vocab_embed_size, refined_model_decoder_hidden_size, refined_model_decoder_num_layers, refined_model_encoder_embed_size, refined_model_batch_size, refined_model_num_epochs, refined_model_save_every, refined_model_num_workers
+from settings import refined_model_vocab_embed_size, refined_model_decoder_hidden_size, refined_model_decoder_num_layers, refined_model_encoder_embed_size, refined_model_batch_size, refined_model_num_epochs, refined_model_save_every, refined_model_num_workers, refined_model_save_every_idx
 
 from captionmodel import RefinedLanguageModel, LanguageModelDiscriminator
 from dataset import get_meme_caption_dataset
@@ -63,7 +63,7 @@ def train():
         gen_loss = '-'
         disc_loss = '-'
         with tqdm(data_loader, desc=f"Epoch {epoch}/{refined_model_num_epochs} | Gen Loss: {gen_loss} | Disc Loss: {disc_loss}") as pbar:
-            for real_images, real_captions in pbar:
+            for idx, (real_images, real_captions) in enumerate(pbar):
                 real_images = real_images.to(device)
                 real_captions = real_captions.to(device)
 
@@ -107,9 +107,9 @@ def train():
 
                 pbar.set_description(f"Epoch {epoch}/{refined_model_num_epochs} | Gen Loss: {gen_loss} | Disc Loss: {disc_loss}")
 
-        if epoch % refined_model_save_every == 0:
-            torch.save(generator.state_dict(), f"{CKPT_PATH}/generator_epoch_{epoch}.ckpt")
-            torch.save(discriminator.state_dict(), f"{CKPT_PATH}/discriminator_epoch_{epoch}.ckpt")
+                if idx % refined_model_save_every_idx == 0:
+                    torch.save(generator.state_dict(), f"{CKPT_PATH}/generator_epoch_{epoch}_iter_{idx}.ckpt")
+                    torch.save(discriminator.state_dict(), f"{CKPT_PATH}/discriminator_epoch_{epoch}_iter_{idx}.ckpt")
 
 
 def print_training_stats(

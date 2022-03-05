@@ -23,3 +23,4 @@ refined_model_batch_size            = 32
 refined_model_num_workers           = 8
 refined_model_num_epochs            = 2000
 refined_model_save_every            = 1
+refined_model_save_every_idx        = 2000
