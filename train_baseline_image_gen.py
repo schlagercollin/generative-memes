@@ -34,7 +34,7 @@ from torch.optim import Adam
 os.environ["TENSORBOARD_LOGGING"] = "1"
 
 #dataset = MemeTemplateDataset(epoch_multiplier=500)  # approx 5 min / epoch
-dataset = SimpleMemeTemplateDataset("meme-templates") 
+dataset = SimpleMemeTemplateDataset("meme-templates", epoch_multiplier=25) 
 
 dataloader = torch.utils.data.DataLoader(
     dataset, batch_size=batch_size, shuffle=True, num_workers=workers

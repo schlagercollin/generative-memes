@@ -214,7 +214,9 @@ class MemeTemplateDataset(Dataset):
     
 
 class SimpleMemeTemplateDataset(Dataset):
-    def __init__(self, image_dir, transform=None):
+    def __init__(self, image_dir, transform=None, epoch_multiplier=1):
+        
+        self.epoch_multiplier = epoch_multiplier
         
         self.image_dir = image_dir
         self.image_paths = [x for x in os.listdir(image_dir) if ".jpg" in x]
@@ -230,14 +232,17 @@ class SimpleMemeTemplateDataset(Dataset):
             self.transform = transform
         
     def __getitem__(self, index):
+
+        index = index % len(self.image_paths)
+
         image_path = self.image_paths[index]
-        x = Image.open(self.image_dir + "/" + image_path)
+        x = Image.open(self.image_dir + "/" + image_path).convert('RGB')
         if self.transform is not None:
             x = self.transform(x)
         return x
     
     def __len__(self):
-        return len(self.image_paths)
+        return len(self.image_paths) * self.epoch_multiplier
 
 
 if __name__ == "__main__":
