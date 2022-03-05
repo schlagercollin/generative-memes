@@ -13,6 +13,8 @@ from utils import get_preprocessing_normalisation_transform
 
 from tqdm import tqdm
 
+CKPT_PATH = "./caption-model-adversarial"
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def train():
@@ -57,9 +59,6 @@ def train():
     criterion = torch.nn.BCEWithLogitsLoss()
 
     for epoch in range(refined_model_num_epochs):
-        # grab a batch of images, pass through generator
-
-        # take output from that, pass through discriminator w/ ground truth = 0 for discriminator
 
         gen_loss = '-'
         disc_loss = '-'
@@ -79,14 +78,12 @@ def train():
                 real_next_word = real_captions[:, batch_length]
                 real_captions = real_captions[:, :batch_length]
 
-                # print('Step 1: Generate')
-
                 # generate fake next word
                 fake_next_word = generator(real_images, real_next_word)[:, -1]
 
                 # convert real_next_word to one hot
-                real_next_word_one_hot = torch.nn.functional.one_hot(real_next_word, num_classes=vocab_size).squeeze().float().to(device)
-
+                real_next_word_one_hot = torch.nn.functional.one_hot(real_next_word, num_classes=vocab_size).squeeze().float().to(device)                
+                
                 # print('Step 2: Discriminate')
 
                 real_preds = discriminator(real_images, real_captions, real_next_word_one_hot)
@@ -103,8 +100,6 @@ def train():
                 ### Update the generator ###
                 gen_opt.zero_grad()
 
-                # print('Step 3: Discriminate... Some more.')
-
                 fake_preds = discriminator(real_images, real_captions, fake_next_word)
                 gen_loss = criterion(fake_preds, torch.ones_like(fake_preds))
                 gen_loss.backward()
@@ -112,16 +107,9 @@ def train():
 
                 pbar.set_description(f"Epoch {epoch}/{refined_model_num_epochs} | Gen Loss: {gen_loss} | Disc Loss: {disc_loss}")
 
-                # print_training_stats(
-                #     epoch,
-                #     refined_model_num_epochs,
-                #     disc_loss,
-                #     gen_loss,
-                # )
-
-        # grab a separate batch of images, and their captions, and pass through disciminator with ground truth = 1
-
-        # backprop the living shit out of that
+        if epoch % refined_model_save_every == 0:
+            torch.save(generator.state_dict(), f"{CKPT_PATH}/generator_epoch_{epoch}.ckpt")
+            torch.save(discriminator.state_dict(), f"{CKPT_PATH}/discriminator_epoch_{epoch}.ckpt")
 
 
 def print_training_stats(

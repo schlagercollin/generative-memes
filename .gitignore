@@ -134,6 +134,7 @@ images
 *.model
 caption-model-ckpts/*.pth
 caption-model-v2-ckpts/*.ckpt
+caption-model-adversarial/*.ckpt
 *.npy
 dataset_cache/dataset.db
 
