@@ -228,7 +228,7 @@ def generate_meme(generator, encoder, decoder, data_loader, device, dataset, noi
     
     return meme_img
 
-def generate_meme_v2(generator, model, data_loader, device, dataset, noise=None, truncated_normal=False, beam_search=True, custom_caption=None):
+def generate_meme_v2(generator, model, data_loader, device, dataset, noise=None, truncated_normal=False, beam_search=True, custom_caption=None, beam_search_temperature=2):
     
     generator_out = generate_background(generator, device, noise, truncated_normal)
     if custom_caption is not None:
@@ -240,7 +240,7 @@ def generate_meme_v2(generator, model, data_loader, device, dataset, noise=None,
             dataset,
             device,
             length_to_generate=10,
-            beam_search_temperature=2,
+            beam_search_temperature=beam_search_temperature,
             branch_factor=1
         )
     else:

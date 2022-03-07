@@ -50,7 +50,7 @@ class RefinedLanguageModel(nn.Module):
         #     embeddings = self.encoder_cnn(images)
         # else:
         with torch.no_grad():
-            embeddings = self.encoder_cnn(images).logits
+            embeddings = self.encoder_cnn(images)
 
         embeddings = self.encoder_to_decoder(embeddings)
 
