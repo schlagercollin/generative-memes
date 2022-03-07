@@ -8,8 +8,85 @@ import torch
 import utils
 import numpy as np
 from tqdm import tqdm
+import sys
 
 from utils import get_preprocessing_normalisation_transform
+
+from dataset import get_meme_caption_dataset
+from captionmodel import RefinedLanguageModel
+
+from settings import refined_model_vocab_embed_size, refined_model_decoder_hidden_size, refined_model_decoder_num_layers, refined_model_encoder_embed_size
+
+import matplotlib.pyplot as plt
+
+from torchgan.models import DCGANGenerator
+from torch import nn
+import torch
+
+import numpy as np
+
+import utils
+
+def load_inference_components():
+    """Load the necessary components to run inference.
+
+    Returns:
+        tuple of components
+    """
+    
+    GAN_PARAMS_TO_LOAD = 'wasserstein-loss-experiment-1.model'
+    GAN_CKPT_PATH = f'./model/{GAN_PARAMS_TO_LOAD}'
+    MODEL_PARAMS_TO_LOAD = 'v3-epoch-0.ckpt'
+    MODEL_CKPT_PATH = f'./caption-model-v2-ckpts/{MODEL_PARAMS_TO_LOAD}'
+
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+    # Load the meme background generator
+    generator_state_dict = torch.load(
+        GAN_CKPT_PATH,
+        map_location=torch.device(device)
+    )['generator']
+
+    generator = DCGANGenerator(
+        encoding_dims=100,
+        out_size=64,
+        out_channels=3,
+        step_channels=64,
+        nonlinearity=nn.LeakyReLU(0.2),
+        last_nonlinearity=nn.Tanh(),
+    ).to(device).eval()
+
+    generator.load_state_dict(
+        state_dict=generator_state_dict
+    )
+
+    dataset = get_meme_caption_dataset()
+    vocab_size = len(dataset.itos)
+
+    data_loader = torch.utils.data.DataLoader(
+        dataset,
+        batch_size=1,
+        shuffle=True,
+        num_workers=1
+    )
+
+    model = None
+
+    # model = RefinedLanguageModel(
+    #             vocab_embed_size=refined_model_vocab_embed_size,
+    #             decoder_hidden_size=refined_model_decoder_hidden_size,
+    #             decoder_num_layers=refined_model_decoder_num_layers,
+    #             vocab_size=vocab_size,
+    #             encoder_embed_size=refined_model_encoder_embed_size
+    #         ).to(device)
+
+    # model.load_state_dict(
+    #     torch.load(MODEL_CKPT_PATH, map_location=torch.device(device))
+    # )
+
+    # model.eval()
+    
+    return generator, model, data_loader, device, dataset
 
 
 def gt_vec_to_text(caption, dataset):
@@ -252,3 +329,13 @@ def generate_meme_v2(generator, model, data_loader, device, dataset, noise=None,
     meme_img = meme.draw()
     
     return meme_img
+
+def create_meme_image(generator, device, noise=None):
+    
+    if noise is not None:
+        out = generate_background(generator, device, noise=noise)
+    else:
+        out = generate_background(generator, device, truncated_normal=True)
+    img = utils.tensor_to_image(out)
+    
+    return img
