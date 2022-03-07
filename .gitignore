@@ -139,3 +139,6 @@ caption-model-adversarial/*.ckpt
 dataset_cache/dataset.db
 
 .DS_Store
+
+meme-templates
+notebooks/templates
