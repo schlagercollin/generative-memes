@@ -6,7 +6,7 @@ Main training function for the baseline image generator.
 Run with `python train_baseline_image_gen.py`
 """
 import torch
-from settings import batch_size, workers
+from settings import batch_size, workers, img_size
 from dataset import MemeTemplateDataset, SimpleMemeTemplateDataset
 from matplotlib import pyplot as plt
 import numpy as np
@@ -33,8 +33,7 @@ from torch.optim import Adam
 
 os.environ["TENSORBOARD_LOGGING"] = "1"
 
-#dataset = MemeTemplateDataset(epoch_multiplier=500)  # approx 5 min / epoch
-dataset = SimpleMemeTemplateDataset("meme-templates") 
+dataset = SimpleMemeTemplateDataset("meme-templates", epoch_multiplier=3)  # approx 15 min / epoch
 
 dataloader = torch.utils.data.DataLoader(
     dataset, batch_size=batch_size, shuffle=True, num_workers=workers
@@ -45,9 +44,9 @@ dcgan_network = {
         "name": DCGANGenerator,
         "args": {
             "encoding_dims": 100,
-            "out_size": 64,
+            "out_size": img_size,
             "out_channels": 3,
-            "step_channels": 64,
+            "step_channels": 128,
             "nonlinearity": nn.LeakyReLU(0.2),
             "last_nonlinearity": nn.Tanh(),
         },
@@ -56,9 +55,9 @@ dcgan_network = {
     "discriminator": {
         "name": DCGANDiscriminator,
         "args": {
-            "in_size": 64,
+            "in_size": img_size,
             "in_channels": 3,
-            "step_channels": 64,
+            "step_channels": 128,
             "nonlinearity": nn.LeakyReLU(0.2),
             "last_nonlinearity": nn.LeakyReLU(0.2),
         },
@@ -90,7 +89,7 @@ if __name__ == "__main__":
     print("Epochs: {}".format(epochs))
 
     trainer = Trainer(
-        dcgan_network, wgangp_losses, sample_size=64, epochs=epochs, device=device, retain_checkpoints=100
+        dcgan_network, wgangp_losses, sample_size=64, epochs=epochs, device=device, retain_checkpoints=5
     )
 
     trainer(dataloader)
