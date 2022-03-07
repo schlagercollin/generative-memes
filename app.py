@@ -30,3 +30,6 @@ def index():
         return render_template("meme.html", img_data=encoded_img_data.decode('utf-8'))
    
     return render_template("form.html")
+
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=8080)
