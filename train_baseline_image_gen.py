@@ -46,7 +46,7 @@ dcgan_network = {
             "encoding_dims": 100,
             "out_size": img_size,
             "out_channels": 3,
-            "step_channels": 128,
+            "step_channels": 64,
             "nonlinearity": nn.LeakyReLU(0.2),
             "last_nonlinearity": nn.Tanh(),
         },
@@ -57,7 +57,7 @@ dcgan_network = {
         "args": {
             "in_size": img_size,
             "in_channels": 3,
-            "step_channels": 128,
+            "step_channels": 64,
             "nonlinearity": nn.LeakyReLU(0.2),
             "last_nonlinearity": nn.LeakyReLU(0.2),
         },
