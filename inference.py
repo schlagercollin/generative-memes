@@ -93,7 +93,8 @@ def generate_caption_v2_beam_search(
         device,
         length_to_generate,
         beam_search_temperature=2.5,
-        branch_factor=10
+        branch_factor=10,
+        silent=False
 ):
     assert generator_output.shape[0] == 1, "This function currently only supports a batch size of 1"
 
@@ -127,7 +128,7 @@ def generate_caption_v2_beam_search(
     # feed the image and the start token to the model
     for i in range(length_to_generate):
         new_captions = []
-        for caption, current_prob, is_done in tqdm(best_captions, desc=f"Generating captions of length {i}/{length_to_generate}"):
+        for caption, current_prob, is_done in tqdm(best_captions, desc=f"Generating captions of length {i}/{length_to_generate}", disable=silent):
             if not is_done:
                 # provide some suggestions on how to extend the caption
                 for _ in range(branch_factor):
@@ -228,7 +229,7 @@ def generate_meme(generator, encoder, decoder, data_loader, device, dataset, noi
     
     return meme_img
 
-def generate_meme_v2(generator, model, data_loader, device, dataset, noise=None, truncated_normal=False, beam_search=True, custom_caption=None, beam_search_temperature=2):
+def generate_meme_v2(generator, model, data_loader, device, dataset, noise=None, truncated_normal=False, beam_search=True, branch_factor=2, custom_caption=None, beam_search_temperature=2):
     
     generator_out = generate_background(generator, device, noise, truncated_normal)
     if custom_caption is not None:
@@ -241,7 +242,7 @@ def generate_meme_v2(generator, model, data_loader, device, dataset, noise=None,
             device,
             length_to_generate=10,
             beam_search_temperature=beam_search_temperature,
-            branch_factor=1
+            branch_factor=branch_factor
         )
     else:
         caption = generate_caption_v2(generator_out, model, data_loader, dataset, device, 10)
