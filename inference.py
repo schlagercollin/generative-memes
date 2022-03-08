@@ -5,27 +5,19 @@ inference.py
 Scripts for model inference.
 """
 import torch
+from torch import nn
 import utils
 import numpy as np
 from tqdm import tqdm
-import sys
+
+from torchgan.models import DCGANGenerator
 
 from utils import get_preprocessing_normalisation_transform
-
 from dataset import get_meme_caption_dataset
 from captionmodel import RefinedLanguageModel
 
 from settings import refined_model_vocab_embed_size, refined_model_decoder_hidden_size, refined_model_decoder_num_layers, refined_model_encoder_embed_size
 
-import matplotlib.pyplot as plt
-
-from torchgan.models import DCGANGenerator
-from torch import nn
-import torch
-
-import numpy as np
-
-import utils
 
 def load_inference_components():
     """Load the necessary components to run inference.
@@ -70,21 +62,19 @@ def load_inference_components():
         num_workers=1
     )
 
-    model = None
+    model = RefinedLanguageModel(
+                vocab_embed_size=refined_model_vocab_embed_size,
+                decoder_hidden_size=refined_model_decoder_hidden_size,
+                decoder_num_layers=refined_model_decoder_num_layers,
+                vocab_size=vocab_size,
+                encoder_embed_size=refined_model_encoder_embed_size
+            ).to(device)
 
-    # model = RefinedLanguageModel(
-    #             vocab_embed_size=refined_model_vocab_embed_size,
-    #             decoder_hidden_size=refined_model_decoder_hidden_size,
-    #             decoder_num_layers=refined_model_decoder_num_layers,
-    #             vocab_size=vocab_size,
-    #             encoder_embed_size=refined_model_encoder_embed_size
-    #         ).to(device)
+    model.load_state_dict(
+        torch.load(MODEL_CKPT_PATH, map_location=torch.device(device))
+    )
 
-    # model.load_state_dict(
-    #     torch.load(MODEL_CKPT_PATH, map_location=torch.device(device))
-    # )
-
-    # model.eval()
+    model.eval()
     
     return generator, model, data_loader, device, dataset
 
