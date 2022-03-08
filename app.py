@@ -2,7 +2,7 @@ import torch
 import torch
 
 from flask import Flask, render_template, request
-from inference import load_inference_components, create_meme_image
+from inference import load_inference_components, create_meme_image, generate_meme_v2
 from utils import Meme
 
 from PIL import Image
@@ -20,8 +20,7 @@ def index():
         
         # just set the seed and generate that way
         torch.manual_seed(input_val)
-        im = create_meme_image(generator, "cpu")
-        im = Meme("Funny caption", im).draw()
+        im = generate_meme_v2(generator, model, data_loader, device, dataset)
         
         data = io.BytesIO()
         im.save(data, "JPEG")
