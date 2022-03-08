@@ -5,27 +5,19 @@ inference.py
 Scripts for model inference.
 """
 import torch
+from torch import nn
 import utils
 import numpy as np
 from tqdm import tqdm
-import sys
+
+from torchgan.models import DCGANGenerator
 
 from utils import get_preprocessing_normalisation_transform
-
 from dataset import get_meme_caption_dataset
 from captionmodel import RefinedLanguageModel
 
 from settings import refined_model_vocab_embed_size, refined_model_decoder_hidden_size, refined_model_decoder_num_layers, refined_model_encoder_embed_size
 
-import matplotlib.pyplot as plt
-
-from torchgan.models import DCGANGenerator
-from torch import nn
-import torch
-
-import numpy as np
-
-import utils
 
 def load_inference_components():
     """Load the necessary components to run inference.
@@ -70,21 +62,19 @@ def load_inference_components():
         num_workers=1
     )
 
-    model = None
+    model = RefinedLanguageModel(
+                vocab_embed_size=refined_model_vocab_embed_size,
+                decoder_hidden_size=refined_model_decoder_hidden_size,
+                decoder_num_layers=refined_model_decoder_num_layers,
+                vocab_size=vocab_size,
+                encoder_embed_size=refined_model_encoder_embed_size
+            ).to(device)
 
-    # model = RefinedLanguageModel(
-    #             vocab_embed_size=refined_model_vocab_embed_size,
-    #             decoder_hidden_size=refined_model_decoder_hidden_size,
-    #             decoder_num_layers=refined_model_decoder_num_layers,
-    #             vocab_size=vocab_size,
-    #             encoder_embed_size=refined_model_encoder_embed_size
-    #         ).to(device)
+    model.load_state_dict(
+        torch.load(MODEL_CKPT_PATH, map_location=torch.device(device))
+    )
 
-    # model.load_state_dict(
-    #     torch.load(MODEL_CKPT_PATH, map_location=torch.device(device))
-    # )
-
-    # model.eval()
+    model.eval()
     
     return generator, model, data_loader, device, dataset
 
@@ -170,7 +160,8 @@ def generate_caption_v2_beam_search(
         device,
         length_to_generate,
         beam_search_temperature=2.5,
-        branch_factor=10
+        branch_factor=10,
+        silent=False
 ):
     assert generator_output.shape[0] == 1, "This function currently only supports a batch size of 1"
 
@@ -204,7 +195,7 @@ def generate_caption_v2_beam_search(
     # feed the image and the start token to the model
     for i in range(length_to_generate):
         new_captions = []
-        for caption, current_prob, is_done in tqdm(best_captions, desc=f"Generating captions of length {i}/{length_to_generate}"):
+        for caption, current_prob, is_done in tqdm(best_captions, desc=f"Generating captions of length {i}/{length_to_generate}", disable=silent):
             if not is_done:
                 # provide some suggestions on how to extend the caption
                 for _ in range(branch_factor):
@@ -305,7 +296,7 @@ def generate_meme(generator, encoder, decoder, data_loader, device, dataset, noi
     
     return meme_img
 
-def generate_meme_v2(generator, model, data_loader, device, dataset, noise=None, truncated_normal=False, beam_search=True, custom_caption=None, beam_search_temperature=2):
+def generate_meme_v2(generator, model, data_loader, device, dataset, noise=None, truncated_normal=False, beam_search=True, branch_factor=2, custom_caption=None, beam_search_temperature=2):
     
     generator_out = generate_background(generator, device, noise, truncated_normal)
     if custom_caption is not None:
@@ -318,7 +309,7 @@ def generate_meme_v2(generator, model, data_loader, device, dataset, noise=None,
             device,
             length_to_generate=10,
             beam_search_temperature=beam_search_temperature,
-            branch_factor=1
+            branch_factor=branch_factor
         )
     else:
         caption = generate_caption_v2(generator_out, model, data_loader, dataset, device, 10)
