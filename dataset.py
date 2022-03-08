@@ -330,6 +330,8 @@ class SimpleMemeTemplateDataset(Dataset):
             self.transform = transforms.Compose([
                 transforms.PILToTensor(),
                 transforms.Resize(IMG_SIZE),
+                transforms.ConvertImageDtype(torch.uint8),
+                transforms.AutoAugment(policy=AutoAugmentPolicy.IMAGENET),
                 transforms.ConvertImageDtype(torch.float),
             ])
         else:
