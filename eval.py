@@ -36,7 +36,7 @@ def get_baseline_language_model(params_encoder_loc, params_decoder_loc, vocab_si
 
     return (encoder, decoder)
 
-def eval_model(model_name, model, data_loader, dataset):
+def eval_model(model_name, model, data_loader, dataset, beam_search_temperature=None):
 
     num_sentences_to_test = 300
 
@@ -51,15 +51,21 @@ def eval_model(model_name, model, data_loader, dataset):
         caption_vec = caption_vec.to(device)
         image = image.to(device)
 
+        
+
         if len(model) == 1:
             # Refined Language Model (unified architecture)
+
+            if beam_search_temperature is None:
+                beam_search_temperature = 7 if 'adversarial' in model_name else 1.5
+
             caption, _ = generate_caption_v2_beam_search(
                 image,
                 model[0],
                 dataset,
                 device,
                 length_to_generate=10,
-                beam_search_temperature=7 if 'adversarial' in model_name else 1.5,
+                beam_search_temperature=beam_search_temperature,
                 branch_factor=1,
                 silent=True
             )
@@ -100,17 +106,21 @@ def eval():
     ))
 
     model_name_to_model_ckpts = {
-        'final_supervised': get_refined_language_model('./caption-model-v2-ckpts/v3-epoch-0.ckpt', vocab_size),
+        # 'final_supervised': get_refined_language_model('./caption-model-v2-ckpts/v3-epoch-0.ckpt', vocab_size),
         'final_adversarial': get_refined_language_model('./caption-model-adversarial/generator_epoch_1_iter_6000.ckpt', vocab_size),
         # 'baseline': get_baseline_language_model('./caption-model-ckpts/encoder-440.pth', './caption-model-ckpts/decoder-440.pth', vocab_size)
     }
 
     print("All models initialised")
+
+    temperatures_to_test = [1.0, 1.5, 2.0, 5.0, 7.0, 10.0]
     
     for model_name, model in model_name_to_model_ckpts.items():
-        results = eval_model(model_name, model, data_loader, dataset)
-        print(model_name)
-        print(results)
+        for temp in temperatures_to_test:
+            results = eval_model(model_name, model, data_loader, dataset, beam_search_temperature=temp)
+            print('Model: ', model_name)
+            print('Temperature: ', temp)
+            print(results)
 
 
 if __name__ == '__main__':

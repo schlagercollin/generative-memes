@@ -27,6 +27,14 @@ Inference can be easily run in a Jupyter Notebook. Please see `infer.ipynb`.
 The first step is to point the notebook variables to your saved model checkpoints.
 Then you can sample memes and their captions via the last cell.
 
+# Webapp instructions
+
+To launch the flask webapp that allows you to tweak generator parameters, and generate memes in-browser, run:
+
+```
+python app.py
+```
+
 # Dataset
 
 Dataset files are contained in the `scraper` directory. This directory contains a cloned repo of the [ImgFlip575K Memes Dataset](https://github.com/schesa/ImgFlip575K_Dataset) for convenience. The repo houses code for the ImgFlip scrapper as well as a pre-scraped version of the dataset.
