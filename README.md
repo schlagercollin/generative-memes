@@ -5,6 +5,8 @@ Authors: `Collin Schlager`, `Harry Mellsop`, `Randy Quarles`
 
 Using GANs to create memes.
 
+<img src="https://user-images.githubusercontent.com/23715298/157612839-3c0dede6-15bd-4473-b971-f65885ff96df.png">
+
 # Training Model Instructions
 
 We have two separate architectures that need to be trained: 
