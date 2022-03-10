@@ -28,7 +28,7 @@ def load_inference_components():
     
     GAN_PARAMS_TO_LOAD = 'wasserstein-loss-experiment-1.model'
     GAN_CKPT_PATH = f'./model/{GAN_PARAMS_TO_LOAD}'
-    MODEL_PARAMS_TO_LOAD = 'v3-epoch-0.ckpt'
+    MODEL_PARAMS_TO_LOAD = 'trained_v3_language_model_supervised.ckpt'
     MODEL_CKPT_PATH = f'./caption-model-v2-ckpts/{MODEL_PARAMS_TO_LOAD}'
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -296,7 +296,7 @@ def generate_meme(generator, encoder, decoder, data_loader, device, dataset, noi
     
     return meme_img
 
-def generate_meme_v2(generator, model, data_loader, device, dataset, noise=None, truncated_normal=False, beam_search=True, branch_factor=2, custom_caption=None, beam_search_temperature=2):
+def generate_meme_v2(generator, model, data_loader, device, dataset, noise=None, truncated_normal=False, beam_search=True, branch_factor=2, custom_caption=None, beam_search_temperature=3):
     
     generator_out = generate_background(generator, device, noise, truncated_normal)
     if custom_caption is not None:

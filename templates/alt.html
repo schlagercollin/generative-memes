@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <meta name="description" content="" />
+        <meta name="author" content="" />
+        <title>The Big Picture - Start Bootstrap Template</title>
+        <!-- Favicon-->
+        <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+        <!-- Core theme CSS (includes Bootstrap)-->
+        <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet" />
+    </head>
+    <body>
+        <!-- Navigation-->
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-bottom">
+            <div class="container px-4 px-lg-5">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+                <div class="collapse navbar-collapse" id="navbarResponsive">
+                    <ul class="navbar-nav ml-auto">
+                        <li class="nav-item active"><a class="nav-link" href="{{ url_for('index') }}">Generator</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#!">Highlight Reel</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#!">About</a></li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        <!-- Page Content-->
+        <section>
+            <div class="container px-4 px-lg-5">
+                <div class="row gx-4 gx-lg-5">
+                    <div class="col-lg-6">
+                        <h1 class="mt-5">Generate Your Meme</h1>
+                        <p>Adjust the slider below to set your "dankness" seed, then generate your very own GAN-generated meme!</p>
+                    </div>
+                </div>
+                <div class="row gx-4 gx-lg-5">
+                    <div class="col-lg-6">
+                        <form action="{{ url_for('index')}}" method="post">
+                            <label for="input_val">Seed: </label>
+                            <input type="range" id="input_val" name="input_val" placeholder="seed">
+                            <!-- <button onclick="toggleLoadingGif()" type="submit">Generate Meme</button> -->
+                            <button type="submit">Generate Meme</button>
+                        </form>
+                    </div>
+                </div>
+                <br>
+                <div class="row gx-4 gx-lg-5">
+                    <div class="center-block">
+                        {% if img_data %}
+                        <img class="meme-image center-block" width=512 id="meme" src="data:image/jpeg;base64,{{ img_data }}">
+                        {% endif %}
+                        <img id="loading-gif" style="display: none;" class="center-block" src="https://johnjorgenson.com/wp-content/uploads/2018/05/colorful-loader-gif-transparent.gif">
+
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Bootstrap core JS-->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- Core theme JS-->
+        <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    </body>
+</html>

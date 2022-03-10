@@ -3,7 +3,7 @@
 Authors: `Collin Schlager`, `Harry Mellsop`, `Randy Quarles` 
 
 
-Using GANs to create memes (and soon other image + image caption data!).
+Using GANs to create memes.
 
 # Training Model Instructions
 
