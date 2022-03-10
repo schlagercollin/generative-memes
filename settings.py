@@ -1,5 +1,5 @@
 """
-Some global hyperparameters
+Global hyperparameters
 """
 
 # Batch size during training

@@ -1,14 +1,13 @@
 import torch
-import enum
+from tqdm import tqdm
 from captionmodel import RefinedLanguageModel, EncoderCNN, DecoderRNN
 from dataset import get_meme_caption_dataset
-from inference import generate_caption_v2_beam_search, gt_vec_to_text, pred_vec_to_text
-from tqdm import tqdm
-
+from inference import generate_caption_v2_beam_search, gt_vec_to_text
 from nltk.translate.bleu_score import sentence_bleu
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 from settings import refined_model_vocab_embed_size, refined_model_decoder_hidden_size, refined_model_decoder_num_layers, refined_model_encoder_embed_size
+
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def get_refined_language_model(params_loc, vocab_size):
     model = RefinedLanguageModel(
@@ -106,9 +105,9 @@ def eval():
     ))
 
     model_name_to_model_ckpts = {
-        # 'final_supervised': get_refined_language_model('./caption-model-v2-ckpts/v3-epoch-0.ckpt', vocab_size),
+        'final_supervised': get_refined_language_model('./caption-model-v2-ckpts/v3-epoch-0.ckpt', vocab_size),
         'final_adversarial': get_refined_language_model('./caption-model-adversarial/generator_epoch_1_iter_6000.ckpt', vocab_size),
-        # 'baseline': get_baseline_language_model('./caption-model-ckpts/encoder-440.pth', './caption-model-ckpts/decoder-440.pth', vocab_size)
+        'baseline': get_baseline_language_model('./caption-model-ckpts/encoder-440.pth', './caption-model-ckpts/decoder-440.pth', vocab_size)
     }
 
     print("All models initialised")

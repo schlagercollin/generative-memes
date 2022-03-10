@@ -7,11 +7,7 @@ Run with `python train_baseline_image_gen.py`
 """
 import torch
 from settings import batch_size, workers, img_size
-from dataset import MemeTemplateDataset, SimpleMemeTemplateDataset
-from matplotlib import pyplot as plt
-import numpy as np
-import torchgan
-import torchvision.utils as vutils
+from dataset import SimpleMemeTemplateDataset
 import os
 
 from torchgan.models import DCGANGenerator, DCGANDiscriminator
@@ -89,7 +85,12 @@ if __name__ == "__main__":
     print("Epochs: {}".format(epochs))
 
     trainer = Trainer(
-        dcgan_network, wgangp_losses, sample_size=64, epochs=epochs, device=device, retain_checkpoints=5
+        dcgan_network,
+        wgangp_losses, 
+        sample_size=64, 
+        epochs=epochs, 
+        device=device, 
+        retain_checkpoints=5
     )
 
     trainer(dataloader)

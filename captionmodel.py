@@ -93,11 +93,6 @@ class LanguageModelDiscriminator(nn.Module):
         self.output_activation = nn.Softmax(dim=-1)
 
     def forward(self, images, captions, next_words):
-        # TODO: fix this brother
-
-        # if self.eval:
-        #     embeddings = self.encoder_cnn(images)
-        # else:
         with torch.no_grad():
             embeddings = self.encoder_cnn(images).logits
 
@@ -119,8 +114,6 @@ class LanguageModelDiscriminator(nn.Module):
         # linear layer that projects final_outputs onto vocab size
         vocab_output = self.output_activation(self.decoder_to_vocab(final_outputs))
 
-        # would be nice to change this to use indexing instead
-        # TODO: fix this brother
         return torch.einsum('bi,bi->b', vocab_output, next_words)
 
 # Our older language models

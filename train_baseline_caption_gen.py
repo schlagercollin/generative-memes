@@ -11,10 +11,9 @@ import sys
 import os
 from dataset import MemeCaptionDataset
 import numpy as np
+from captionmodel import EncoderCNN, DecoderRNN
 
 from settings import caption_batch_size, workers, caption_num_epochs, caption_save_every
-
-from captionmodel import EncoderCNN, DecoderRNN
 
 CKPT_PATH = "./caption-model-ckpts"
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -28,9 +27,11 @@ def train():
     print("Vocab =", vocab_size)
 
     encoder = EncoderCNN().to(device)
-    decoder = DecoderRNN(embed_size=1024, hidden_size=1024, vocab_size=vocab_size).to(
-        device
-    )
+    decoder = DecoderRNN(
+        embed_size=1024, 
+        hidden_size=1024, 
+        vocab_size=vocab_size
+    ).to(device)
 
     data_loader = iter(
         torch.utils.data.DataLoader(
