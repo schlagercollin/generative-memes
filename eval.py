@@ -1,3 +1,11 @@
+"""
+eval.py
+=======
+
+Scripts to evaluate the caption generation using BLEU score
+and Jaccard similarity.
+"""
+
 import torch
 from tqdm import tqdm
 from captionmodel import RefinedLanguageModel, EncoderCNN, DecoderRNN

@@ -7,14 +7,21 @@ Using GANs to create memes.
 
 # Training Model Instructions
 
-For our baseline model, we have two separate architectures that need to be trained: 
+We have two separate architectures that need to be trained: 
 the image generation model and the text caption model.
 
 These are trained by running:
 
 ```
-python train_baseline_image_gen.py
-python train_baseline_caption_gen.py
+python train_image_gen.py
+```
+
+and one of
+
+```
+python train_baseline_language_model.py
+python train_caption_gen_v2.py
+python train_adversarial_language_model.py
 ```
 
 These training scripts will produce model checkpoint files that are then used in the inference
@@ -22,7 +29,7 @@ step (see next section).
 
 # Inference (Generation) Instructions
 
-Inference can be easily run in a Jupyter Notebook. Please see `infer.ipynb`.
+Inference can be easily run in a Jupyter Notebook. Please see `infer.ipynb` for a visual version. Helper functions are included in `inference.py`.
 
 The first step is to point the notebook variables to your saved model checkpoints.
 Then you can sample memes and their captions via the last cell.
