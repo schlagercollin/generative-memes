@@ -1,7 +1,3 @@
-# FOr the generator, we have a model that takes caption, image and (effectively) outputs the next word.
-
-# discriminator must take image, caption, next word, and output true/false
-
 import torch
 import sys
 
@@ -83,8 +79,6 @@ def train():
 
                 # convert real_next_word to one hot
                 real_next_word_one_hot = torch.nn.functional.one_hot(real_next_word, num_classes=vocab_size).squeeze().float().to(device)                
-                
-                # print('Step 2: Discriminate')
 
                 real_preds = discriminator(real_images, real_captions, real_next_word_one_hot)
                 fake_preds = discriminator(real_images, real_captions, fake_next_word.detach())
