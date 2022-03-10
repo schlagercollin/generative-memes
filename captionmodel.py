@@ -44,11 +44,6 @@ class RefinedLanguageModel(nn.Module):
         # we should run a check here and throw a warning if not properly normalised; see instructions:
         # https://pytorch.org/hub/pytorch_vision_inception_v3/
 
-        # TODO: fix this brother
-        # extract image features from image batch
-        # if self.eval:
-        #     embeddings = self.encoder_cnn(images)
-        # else:
         with torch.no_grad():
             try:
                 embeddings = self.encoder_cnn(images).logits
