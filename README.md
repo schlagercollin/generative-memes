@@ -45,3 +45,5 @@ python app.py
 # Dataset
 
 Dataset files are contained in the `scraper` directory. This directory contains a cloned repo of the [ImgFlip575K Memes Dataset](https://github.com/schesa/ImgFlip575K_Dataset) for convenience. The repo houses code for the ImgFlip scrapper as well as a pre-scraped version of the dataset.
+
+This pre-made scraper only scrapes 100 meme templates. We wrote a custom scraper to scrape almost 2,000 total memes (see `scrape_imgflip.ipynb`). 
